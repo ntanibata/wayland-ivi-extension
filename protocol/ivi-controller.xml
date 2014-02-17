@@ -610,6 +610,7 @@
             </description>
             <entry name="unknown_error" value="1" summary="unknown error encountered"/>
             <entry name="file_error"    value="2" summary="file i/o error encountered"/>
+            <entry name="native_handle_end" value="3" summary="end get_native_handle event"/>
         </enum>
 
         <event name="error">
@@ -629,6 +630,15 @@
             <arg name="object_type" type="int"/>
             <arg name="error_code" type="int"/>
             <arg name="error_text" type="string" allow-null="true"/>
+        </event>
+
+        <request name="get_native_handle">
+            <arg name="id_process" type="uint"/>
+            <arg name="title" type="string" allow-null="true"/>
+        </request>
+
+        <event name="native_handle">
+            <arg name="surface" type="new_id" interface="wl_surface"/>
         </event>
 
     </interface>
