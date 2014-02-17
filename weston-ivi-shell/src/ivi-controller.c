@@ -1560,10 +1560,52 @@ controller_surface_create(struct wl_client *client,
                        &prop, IVI_NOTIFICATION_ALL);
 }
 
+static void
+controller_get_native_handle(struct wl_client *client,
+                             struct wl_resource *resource,
+                             uint32_t id_process,
+                             const char *title)
+{
+    struct wl_array surfaces;
+    ivi_shell_get_shell_surfaces(&surfaces);
+    struct shell_surface ** surface;
+
+    wl_array_for_each(surface, &surfaces) {
+
+        uint32_t pid = shell_surface_get_process_id(*surface);
+        if (pid != id_process) {
+            continue;
+        }
+
+        if (title) {
+            char* surface_title = shell_surface_get_title(*surface);
+            if (strcmp(title, surface_title)) {
+                continue;
+            }
+        }
+
+        struct weston_surface *es = shell_surface_get_surface(*surface);
+        if (es) {
+            struct wl_resource *res = wl_resource_create(client, &wl_surface_interface, 1, 0);
+            wl_resource_set_user_data(res, es);
+
+            ivi_controller_send_native_handle(resource, res);
+        }
+    }
+
+    wl_array_release(&surfaces);
+
+    int32_t id_object = 0;
+    ivi_controller_send_error(
+        resource, id_object, IVI_CONTROLLER_OBJECT_TYPE_SURFACE,
+        IVI_CONTROLLER_ERROR_CODE_NATIVE_HANDLE_END, "");
+}
+
 static const struct ivi_controller_interface controller_implementation = {
     controller_commit_changes,
     controller_layer_create,
-    controller_surface_create
+    controller_surface_create,
+    controller_get_native_handle
 };
 
 static void

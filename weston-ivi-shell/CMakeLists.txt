@@ -84,7 +84,7 @@ set(LIBS
 
 set(CMAKE_C_LDFLAGS "-module -avoid-version")
 
-target_link_libraries(${PROJECT_NAME} ${LIBS})
+target_link_libraries(${PROJECT_NAME} ${LIBS} ${WESTON_LIBDIR}/weston/ivi-shell.so)
 
 install (
     TARGETS             ${PROJECT_NAME}
