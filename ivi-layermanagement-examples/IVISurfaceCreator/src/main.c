@@ -142,7 +142,8 @@ main(int argc, char **argv)
 
     int32_t process_id   = atoi(argv[1]);
     char *  window_title = NULL;
-    display.surface_id   = atoi(argv[3]);
+    char *  endptr = NULL;
+    display.surface_id   = strtoul(argv[3], &endptr, 0);
 
     if (strlen(argv[2]) > 0)
     {
