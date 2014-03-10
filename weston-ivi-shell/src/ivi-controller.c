@@ -31,7 +31,7 @@
 #include "weston/compositor.h"
 #include "ivi-controller-server-protocol.h"
 #include "weston/weston-layout.h"
-#include "weston/ivi-shell.h"
+#include "weston/ivi-shell-ext.h"
 
 struct ivishell;
 struct ivilayer;
