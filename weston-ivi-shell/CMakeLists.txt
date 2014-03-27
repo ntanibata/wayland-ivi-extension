@@ -72,7 +72,7 @@ set(LIBS
     ${WESTON_LIBRARIES}
 )
 
-target_link_libraries(${PROJECT_NAME} ${LIBS} ${WESTON_LIBDIR}/weston/ivi-shell.so ${WESTON_LIBDIR}/weston/ivi-shell-ext.so)
+target_link_libraries(${PROJECT_NAME} ${LIBS} ${WESTON_LIBDIR}/weston/ivi-shell.so)
 
 install (
     TARGETS             ${PROJECT_NAME}
