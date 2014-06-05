@@ -323,6 +323,7 @@ ilmErrorTypes OpenGLES2App::setupLayerMangement(SurfaceConfiguration* config)
     ilmErrorTypes error = ILM_FAILED;
 
     // register surfaces to layermanager
+    t_ilm_layer layerid = 1000;//(t_ilm_layer)config->layerId;//LAYER_EXAMPLE_GLES_APPLICATIONS;
     t_ilm_surface surfaceid = (t_ilm_surface)config->surfaceId;//SURFACE_EXAMPLE_EGLX11_APPLICATION;
     int width = config->surfaceWidth;
     int height = config->surfaceHeight;
@@ -337,6 +338,8 @@ ilmErrorTypes OpenGLES2App::setupLayerMangement(SurfaceConfiguration* config)
         glClearColor(0.2f, 0.2f, 0.5f, 1.0f);
     }
 
+    ilm_layerCreateWithDimension(&layerid, width, height);
+
     ilm_surfaceCreate((t_ilm_nativehandle)m_wlContextStruct.wlSurface, width, height,
             ILM_PIXELFORMAT_RGBA_8888, &surfaceid);
 
@@ -349,6 +352,10 @@ ilmErrorTypes OpenGLES2App::setupLayerMangement(SurfaceConfiguration* config)
 
     cout << "Set surface " << surfaceid << " opacity " << opacity << "\n";
     ilm_surfaceSetOpacity(surfaceid, opacity);
+
+    error = ilm_layerAddSurface(layerid, surfaceid);
+    error = ilm_layerSetVisibility(layerid, ILM_TRUE);
+    error = ilm_displaySetRenderOrder(0, &layerid, 1);
 
     cout << "commit\n";
     error = ilm_commitChanges();
