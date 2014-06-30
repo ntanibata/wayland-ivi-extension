@@ -61,7 +61,7 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 install (
     TARGETS             ${PROJECT_NAME}
-    LIBRARY DESTINATION lib
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 )
 
 install (
