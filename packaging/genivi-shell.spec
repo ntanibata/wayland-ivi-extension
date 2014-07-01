@@ -6,7 +6,7 @@ License:        Apache-2.0
 Group:          Graphics & UI Framework/Wayland Window System
 Url:            http://git.projects.genivi.org/wayland-ivi-extension.git
 Source0:        %name-%version.tar.gz
-Source1001: 	genivi-shell.manifest
+Source1001:     genivi-shell.manifest
 BuildRequires:  cmake
 BuildRequires:  weston-ivi-shell-devel
 BuildRequires:  pkgconfig(wayland-client)
@@ -24,7 +24,7 @@ manager client interface.
 %package devel
 Summary: Development files for package %{name}
 Group:   Graphics & UI Framework/Development
-Requires: %{name} = %{version}
+Requires: %{name} = %{version}-%{release}
 %description devel
 This package provides header files and other developer files needed for
 creating GENIVI layer manager clients.
@@ -33,15 +33,11 @@ creating GENIVI layer manager clients.
 %setup -q
 cp %{SOURCE1001} .
 
-/usr/bin/wayland-scanner code < protocol/ivi-controller.xml \
-    > protocol/ivi-controller-protocol.c
-
-
 %cmake .
 
 %build
 
-make %{?_smp_mflags}
+make %{?_smp_mflags} V=1
 
 %install
 %make_install
@@ -69,6 +65,7 @@ install -m 644 protocol/ivi-controller-protocol.c \
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root)
+%{_bindir}/IVISurfaceCreator
 %{_bindir}/LayerManagerControl
 %{_bindir}/EGLWLMockNavigation
 %{_libdir}/libilmClient.so.*
@@ -89,5 +86,4 @@ install -m 644 protocol/ivi-controller-protocol.c \
 %{_datadir}/%{name}/protocol/*.xml
 %{_datadir}/%{name}/protocol/*.h
 %{_datadir}/%{name}/protocol/*.c
-
 
