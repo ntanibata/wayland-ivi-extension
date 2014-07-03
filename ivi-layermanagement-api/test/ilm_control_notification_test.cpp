@@ -140,22 +140,24 @@ public:
     static void assertCallbackcalled(int numberOfExpectedCalls=1){
         static struct timespec theTime;
         clock_gettime(CLOCK_REALTIME, &theTime);
-        add_nsecs(&theTime, 500000000);
+        add_nsec(&theTime, 500000000);
         PthreadMutexLock lock(notificationMutex);
         int status = 0;
         do {
-            if (numberOfExpectedCalls!=timesCalled){
+            if (numberOfExpectedCalls!=timesCalled) {
                 status = pthread_cond_timedwait( &waiterVariable, &notificationMutex, &theTime);
             }
         } while (status!=ETIMEDOUT && numberOfExpectedCalls!=timesCalled);
-        ASSERT_NE(ETIMEDOUT, status);
+
+        // we cannot rely on a timeout as layer callbacks are always called synchronously on ilm_commitChanges()
+        EXPECT_NE(ETIMEDOUT, status);
         timesCalled=0;
     }
 
     static void assertNoCallbackIsCalled(){
         struct timespec theTime;
         clock_gettime(CLOCK_REALTIME, &theTime);
-        add_nsecs(&theTime, 500000000);
+        add_nsec(&theTime, 500000000);
         PthreadMutexLock lock(notificationMutex);
         // assert that we have not been notified
         ASSERT_EQ(ETIMEDOUT, pthread_cond_timedwait( &waiterVariable, &notificationMutex, &theTime));
