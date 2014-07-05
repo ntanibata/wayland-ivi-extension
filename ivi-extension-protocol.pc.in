@@ -1,0 +1,10 @@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @name@
+Description: native Wayland protocols to use Genivi Shell
+Requires: weston
+Version: @package_version@
+Libs: -L${libdir} -livi-extension-protocol
+Cflags: -I${includedir}
+
