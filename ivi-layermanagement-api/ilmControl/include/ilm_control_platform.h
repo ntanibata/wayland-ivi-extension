@@ -141,6 +141,9 @@ typedef struct _ILM_CONTROL_PLATFORM_FUNC
     ilmErrorTypes (*surfaceSetSourceRectangle)(t_ilm_surface surfaceId,
                    t_ilm_int x, t_ilm_int y,
                    t_ilm_int width, t_ilm_int height);
+    ilmErrorTypes (*surfaceSetInputFocus)(t_ilm_surface surfaceId,
+                   ilmInputDevice devices,
+                   t_ilm_bool acceptance);
     ilmErrorTypes (*commitChanges)();
 } ILM_CONTROL_PLATFORM_FUNC;
 

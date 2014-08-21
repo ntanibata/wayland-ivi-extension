@@ -765,10 +765,14 @@ controller_surface_listener_input_focus(void *data,
                    uint32_t device,
                    int32_t enabled)
 {
-    (void)data;
+    struct surface_context *ctx_surf = data;
     (void)controller;
-    (void)device;
-    (void)enabled;
+
+    if (enabled != 0) {
+        ctx_surf->prop.inputDevicesAcceptance |= device;
+    } else {
+        ctx_surf->prop.inputDevicesAcceptance &= ~device;
+    }
 }
 
 static struct ivi_controller_surface_listener controller_surface_listener=
@@ -1316,7 +1320,9 @@ get_surface_context(struct wayland_context *ctx,
         }
     }
 
-    fprintf(stderr, "failed to get surface context in ilmControl\n");
+    if (ctx_surf == NULL) {
+        fprintf(stderr, "failed to get surface context in ilmControl\n");
+    }
     return NULL;
 }
 
@@ -2661,6 +2667,30 @@ ilm_surfaceSetSourceRectangle(t_ilm_surface surfaceId,
     }
 
     release_instance();
+    return returnValue;
+}
+
+ILM_EXPORT ilmErrorTypes
+ilm_UpdateInputEventAcceptanceOn(t_ilm_surface surfaceId,
+                                 ilmInputDevice devices,
+                                 t_ilm_bool acceptance)
+{
+    ilmErrorTypes returnValue = ILM_FAILED;
+    struct ilm_control_context *ctx = sync_and_acquire_instance();
+    struct surface_context *ctx_surf = NULL;
+
+    ctx_surf = get_surface_context(&ctx->wl, (uint32_t)surfaceId);
+    if (ctx_surf != NULL) {
+        if (ctx_surf->controller != NULL) {
+            ivi_controller_surface_set_input_focus(
+                    ctx_surf->controller,
+                    devices, acceptance);
+            returnValue = ILM_SUCCESS;
+        }
+    }
+
+    release_instance();
+
     return returnValue;
 }
 
