@@ -1070,10 +1070,13 @@ controller_surface_set_input_focus(struct wl_client *client,
               uint32_t device,
               int32_t enabled)
 {
-    (void)client;
-    (void)resource;
-    (void)device;
-    (void)enabled;
+    struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
+    struct ivicontroller_surface *ctrl_link = NULL;
+    ivi_layout_UpdateInputEventAcceptanceOn(ivisurf->layout_surface, device, enabled);
+
+    wl_list_for_each(ctrl_link, &ivisurf->shell->list_controller_surface, link) {
+        ivi_controller_surface_send_input_focus(ctrl_link->resource, device, enabled);
+    }
 }
 
 static const
