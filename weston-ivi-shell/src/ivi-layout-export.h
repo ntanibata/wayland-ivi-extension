@@ -49,8 +49,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "compositor.h"
-#include "ivi-layout.h"
+#include <weston/compositor.h>
+#include <weston/ivi-layout.h>
 
 struct ivi_layout_layer;
 struct ivi_layout_screen;
