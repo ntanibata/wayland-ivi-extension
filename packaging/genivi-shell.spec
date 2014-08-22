@@ -8,6 +8,7 @@ Url:            http://git.projects.genivi.org/wayland-ivi-extension.git
 Source0:        %name-%version.tar.gz
 Source1001: 	genivi-shell.manifest
 BuildRequires:  cmake
+BuildRequires:  weston-ivi-shell-devel
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-egl)
 BuildRequires:  pkgconfig(wayland-server)
