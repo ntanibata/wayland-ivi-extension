@@ -1,0 +1,37 @@
+* Tue Jun 24 2014 Ossama Othman <ossama.othman@intel.com> abbc40a
+- Update to latest version that supports Weston 1.5.
+
+* Wed Apr 16 2014 Philippe Coval <philippe.coval@open.eurogiciel.org> submit/tizen_ivi_release/20140414.044449@ac241ff
+- packaging: Bump to 0.2.1
+  Bug-Tizen: TIVI-3087, TIVI-3029
+
+* Sun Apr 13 2014 Nobuhiko Tanibata <NOBUHIKO_TANIBATA@xddp.denso.co.jp> fbd114b
+- Remove installation of headers which are already removed from upstream branch.
+- Package with the latest upstrem version
+
+* Mon Mar 31 2014 Ossama Othman <ossama.othman@intel.com> submit/tizen_ivi/20140328.193458@e4ce369
+- Install Wayland protocol files without executable bit set.
+- Revert "Bug fixes for ilmControl to avoid potential NULL pointer access."
+- Bug fixes for ilmControl to avoid potential NULL pointer access.
+- packaging: share protocol and generated stubs from wayland-scanner
+- fix: add client generated stub from wayland-scanner in libilmControl.so
+- fix: install protocol headers to include/weston
+- Remove ivi-shell-ext.so from Makefile. This is related to TIVI-2966 because implementation of ivi-shell-ext.so is now integrated to ivi-shell.so.
+- Remove wl_list_init of layer_list which will be used by ivi_shell. To avoid clearing not related ivi_controller.so
+- fix: install protocol headers
+- Corrected XML and source file modes: 0755->0644.
+- Corrected package dependencies.
+- Update ivi-application.xml which is the same as weston-ivi-shell
+- Update spec file with new version 0.1.1
+- Bug fix: TIVI-2897
+- Bugfix: TIVI-2880,P1 and TIVI-2883,P2
+- Bugfix: TIVI-2880,P1 and TIVI-2883,P2
+- Bugfix: TIVI-2880,P1 and TIVI-2883,P2
+- Bugfix: TIVI-2955, P1. Remove dependency on IpcModuleLoader.h
+- dd ivi-shell-ext.so to linker of ivi-controller.
+- Rename ivi-shell header to ivi-shell-ext
+
+* Mon Feb 24 2014 Ossama Othman <ossama.othman@intel.com> 53701f9
+- Package latest version.
+
+- Rebase to latest upstream code.
