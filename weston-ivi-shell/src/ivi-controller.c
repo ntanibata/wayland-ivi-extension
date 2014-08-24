@@ -29,7 +29,11 @@
 #include <cairo.h>
 #include <GLES2/gl2.h>
 
+#include <wayland-server.h>
+
 #include "weston/compositor.h"
+#include "weston/ivi-shell.h"
+#include "weston/ivi-shell-ext.h"
 #include "ivi-controller-server-protocol.h"
 #include "ivi-layout-export.h"
 #include "bitmap.h"
@@ -1620,6 +1624,9 @@ add_client_to_resources(struct ivishell *shell,
     struct wl_resource *resource_output = NULL;
     uint32_t id_layout_surface = 0;
     uint32_t id_layout_layer = 0;
+    struct ivi_layout_surface *layout_surface;
+    int32_t pid;
+    const char *window_title;
 
     wl_list_for_each(iviscrn, &shell->list_screen, link) {
         resource_output = wl_resource_find_for_client(
@@ -1645,11 +1652,14 @@ add_client_to_resources(struct ivishell *shell,
                                   id_layout_layer);
     }
     wl_list_for_each_reverse(ivisurf, &shell->list_surface, link) {
-        id_layout_surface =
-            ivi_layout_getIdOfSurface(ivisurf->layout_surface);
+        layout_surface = ivisurf->layout_surface;
+        id_layout_surface = ivi_layout_getIdOfSurface(layout_surface);
+
+        get_wl_shell_info(layout_surface, id_layout_surface,
+                          &pid, &window_title);
 
         ivi_controller_send_surface(controller->resource,
-                                    id_layout_surface);
+                                    id_layout_surface, pid, window_title);
     }
 }
 
@@ -1746,6 +1756,8 @@ create_surface(struct ivishell *shell,
 {
     struct ivisurface *ivisurf = NULL;
     struct ivicontroller *controller = NULL;
+    int32_t pid;
+    const char *window_title;
 
     ivisurf = get_surface(&shell->list_surface, id_surface);
     if (ivisurf != NULL) {
@@ -1765,9 +1777,11 @@ create_surface(struct ivishell *shell,
     wl_list_init(&ivisurf->link);
     wl_list_insert(&shell->list_surface, &ivisurf->link);
 
+    get_wl_shell_info(layout_surface, id_surface, &pid, &window_title);
+
     wl_list_for_each(controller, &shell->list_controller, link) {
         ivi_controller_send_surface(controller->resource,
-                                    id_surface);
+                                    id_surface, pid, window_title);
     }
 
     ivi_layout_surfaceAddNotification(layout_surface,

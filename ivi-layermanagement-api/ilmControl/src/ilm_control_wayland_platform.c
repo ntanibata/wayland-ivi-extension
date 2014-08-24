@@ -822,10 +822,16 @@ controller_listener_layer(void *data,
 static void
 controller_listener_surface(void *data,
                             struct ivi_controller *controller,
-                            uint32_t id_surface)
+                            uint32_t id_surface,
+                            int32_t pid,
+                            const char *title)
 {
     struct wayland_context *ctx = data;
     struct surface_context *ctx_surf = NULL;
+    int32_t is_inside = 0;
+
+    (void)pid;
+    (void)title;
 
     ctx_surf = get_surface_context(ctx, id_surface);
     if (ctx_surf != NULL) {
@@ -2434,7 +2440,7 @@ ilm_surfaceAddNotification(t_ilm_surface surface,
     if (ctx_surf == NULL) {
         if (callback != NULL) {
             callback((uint32_t)surface, NULL, ILM_NOTIFICATION_CONTENT_REMOVED);
-            controller_listener_surface(ctx, ctx->wl.controller, (uint32_t)surface);
+            controller_listener_surface(ctx, ctx->wl.controller, (uint32_t)surface, 0, NULL);
             ctx_surf = (struct surface_context*)get_surface_context(
                         &ctx->wl, (uint32_t)surface);
             ctx_surf->is_surface_creation_noticed = false;

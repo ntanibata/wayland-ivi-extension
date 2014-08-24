@@ -99,8 +99,8 @@
         <event name="wl_shell_info">
             <arg name="pid" type="int"/>
             <arg name="title" type="string" allow-null="true"/>
+            <arg name="id_surface" type="uint"/>
         </event>
-
     </interface>
 
 </protocol>

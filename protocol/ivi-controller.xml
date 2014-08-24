@@ -592,6 +592,8 @@
                 A new surface is announced to the controller.
             </description>
             <arg name="id_surface" type="uint"/>
+            <arg name="pid" type="int"/>
+            <arg name="title" type="string" allow-null="true"/>
         </event>
 
         <enum name="object_type">
@@ -644,4 +646,3 @@
     </interface>
 
 </protocol>
-
