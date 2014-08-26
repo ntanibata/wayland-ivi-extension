@@ -1,5 +1,5 @@
 Name:           genivi-shell
-Version:        0.2.2
+Version:        0.2.3
 Release:        0
 Summary:        GENIVI Shell Plugin-in
 License:        Apache-2.0
@@ -8,7 +8,7 @@ Url:            http://git.projects.genivi.org/wayland-ivi-extension.git
 Source0:        %name-%version.tar.gz
 Source1001:     genivi-shell.manifest
 BuildRequires:  cmake
-BuildRequires:  weston-ivi-shell-devel
+BuildRequires:  weston-ivi-shell-devel >= 0.1.7
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-egl)
 BuildRequires:  pkgconfig(wayland-server)
