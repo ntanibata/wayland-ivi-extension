@@ -447,6 +447,33 @@ send_surface_event(struct wl_resource *resource,
     if (mask & IVI_NOTIFICATION_ADD) {
         send_surface_add_event(ivisurf, resource, IVI_NOTIFICATION_ADD);
     }
+
+    if (mask & IVI_NOTIFICATION_INPUT_FOCUS) {
+        int32_t kbd_acceptance = ivi_layout_surfaceGetInputAcceptance(
+            ivisurf->layout_surface,
+            IVI_INPUT_DEVICE_KEYBOARD);
+
+        ivi_controller_surface_send_input_focus(resource,
+                                                IVI_INPUT_DEVICE_KEYBOARD,
+                                                kbd_acceptance);
+
+        int32_t pointer_acceptance = ivi_layout_surfaceGetInputAcceptance(
+            ivisurf->layout_surface,
+            IVI_INPUT_DEVICE_POINTER);
+
+        ivi_controller_surface_send_input_focus(resource,
+                                                IVI_INPUT_DEVICE_POINTER,
+                                                pointer_acceptance);
+
+        int32_t touch_acceptance = ivi_layout_surfaceGetInputAcceptance(
+            ivisurf->layout_surface,
+            IVI_INPUT_DEVICE_TOUCH);
+
+        ivi_controller_surface_send_input_focus(resource,
+                                                IVI_INPUT_DEVICE_TOUCH,
+                                                touch_acceptance);
+    }
+
 }
 
 static void
