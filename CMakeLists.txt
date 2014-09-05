@@ -26,6 +26,8 @@ project(wayland-ivi-extension)
 SET(IVI_EXTENSION_VERSION 1.0.0)
 SET(ILM_API_VERSION 1.2.0)
 
+SET(LIB_INSTALL_DIR lib${LIB_SUFFIX})
+
 add_subdirectory(protocol)
 
 add_subdirectory(weston-ivi-shell)

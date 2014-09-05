@@ -88,5 +88,5 @@ target_link_libraries(${PROJECT_NAME} ${LIBS} ${WESTON_LIBDIR}/weston/ivi-shell.
 
 install (
     TARGETS             ${PROJECT_NAME}
-    LIBRARY DESTINATION lib/weston
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}/weston
 )
