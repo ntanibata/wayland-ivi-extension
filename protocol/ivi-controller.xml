@@ -263,14 +263,16 @@
             <description summary="set input focus to this surface">
                 Set input focus state of surface in ivi compositor. If the surface has input
                 focus, all non-graphical inputs (e.g. keyboard) are directed to the application
-                providing the content for this surface.
-                Only one surface can have input focus at a time, so if input focus is enabled
-                for one surface, any other surface with input focus will loose focus.
+                providing the content for this surface. Several surfaces can have input focus at
+                the same time.
+		Supported devices which can be controlled by this request are notified by
+                event, input_focus_capabiliteies. The several devices can be set by bitmasks
+		at one time. ~0x0 means all devices.
                 If argument enabled is 0, the input focus from this surface is removed, no
                 surface will have input focus.
                 If argument enabled is not 0, input focus for this surface is enabled.
             </description>
-            <arg name="device" type="uint"/>
+            <arg name="device_bitmask" type="uint"/>
             <arg name="enabled" type="int"/>
         </request>
 
@@ -279,20 +281,19 @@
                 The new input focus state is provided in argument enabled: If enabled is 0,
                 this surface has no longer the input focus. If enbaled is not 0, this surface
                 now has input focus enabled.
-            </description>
             <arg name="device" type="uint"/>
             <arg name="enabled" type="int"/>
         </event>
 
-        <enum name="input_device">
-            <description summary="brief Identifier of different input device types. Can be used as a bitmask.">
+	<event name="input_focus_capabilities">
+            <description summary="device information supprted by set_input_focus">
+                A input device whici can be controlled by set_input_focus is notified with bitmask and short
+                description. A bitmask is used as a parameter of request: set_input_focus.
             </description>
-            <entry name="keyboard" value="0x1"/>
-            <entry name="pointer" value="0x2"/>
-            <entry name="touch" value="0x4"/>
-            <entry name="all" value="~0x0"/>
-        </enum>
-
+	    <arg name="device_name" type="string"/>
+	    <arg name="device_bitmask" type="uint"/>
+	</event>
+	    
     </interface>
 
     <interface name="ivi_controller_layer" version="1">
