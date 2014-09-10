@@ -371,27 +371,27 @@ ilmErrorTypes ilm_surfaceSetOpacity(const t_ilm_surface surfaceId, t_ilm_float o
 ilmErrorTypes ilm_surfaceGetOpacity(const t_ilm_surface surfaceId, t_ilm_float *pOpacity);
 
 /**
- * \brief Set the keyboard focus on a certain surface
- * To receive keyboard events, 2 conditions must be fulfilled:
- *  1- The surface must accept events from keyboard. See ilm_UpdateInputEventAcceptanceOn
- *  2- The keyboard focus must be set on that surface
+ * \brief get Capabilities of which device is supported by input focus
  *
  * \ingroup ilmControl
- * \param[in] surfaceId Identifier of the surface to set the keyboard focus on.
+ * \param[out] pNumDevice pointer where the number of devices which supports input focus should be stored
+ * \param[out] pInputDeviceCapabilitie pointer where capabilities of devices
  * \return ILM_SUCCESS if the method call was successful
  * \return ILM_FAILED if the client can not call the method on the service.
  */
-ilmErrorTypes ilm_SetKeyboardFocusOn(t_ilm_surface surfaceId);
+ilm_GetInputFocusCapabilities(t_ilm_uint *pNumDevice, ilmInputDeviceCapability **pInputDeviceCapabilities);
 
 /**
- * \brief Get the indentifier of the surface which hold the keyboard focus
+ * \brief Set focus-on/off of input devices on a certain surface
  *
  * \ingroup ilmControl
- * \param[out] pSurfaceId Pointer on the a surface identifier
+ * \param[in] surfaceId Identifier of the surface to set focus-on/off of input devices
+ * \param[in] devices Identifier of devices Bitmask. Bitmask can be retrived by 
+ * \param[in] focus Indicate if the surface is focused on/off for the specified devices
  * \return ILM_SUCCESS if the method call was successful
  * \return ILM_FAILED if the client can not call the method on the service.
  */
-ilmErrorTypes ilm_GetKeyboardFocusSurfaceId(t_ilm_surface* pSurfaceId);
+ilmErrorTypes ilm_SetInputFocus(t_ilm_surface surfaceId, t_ilm_uint devices, t_ilm_bool focus);
 
 /**
  * \brief Set the destination area of a surface within a layer for rendering. The surface will be scaled to this rectangle for rendering.

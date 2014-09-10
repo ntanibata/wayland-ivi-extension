@@ -150,17 +150,6 @@ typedef enum e_ilmOrientation
 } ilmOrientation;
 
 /**
- * \brief Identifier of different input device types. Can be used as a bitmask.
- * \ingroup ilmClient
- */
-typedef unsigned int ilmInputDevice;
-#define ILM_INPUT_DEVICE_KEYBOARD   ((ilmInputDevice) 1 << 0)
-#define ILM_INPUT_DEVICE_POINTER    ((ilmInputDevice) 1 << 1)
-#define ILM_INPUT_DEVICE_TOUCH      ((ilmInputDevice) 1 << 2)
-#define ILM_INPUT_DEVICE_ALL        ((ilmInputDevice) ~0)
-
-
-/**
  * \brief Typedef for representing a layer
  * \ingroup ilmClient
  **/
@@ -209,6 +198,16 @@ typedef t_ilm_char* t_ilm_string;
 typedef t_ilm_const_char* t_ilm_const_string;
 
 /**
+ * \brief Typedef for representing a input device capability structure
+ * \ingroup ilmControl
+ **/
+struct ilmInputDeviceCapability
+{
+    t_ilm_string device_name;           /*!< name of device which supports input_focus feature */
+    t_ilm_uint device_bimask;           /*!< bitmask to specify the device */
+};
+
+/**
  * \brief Typedef for representing a the surface properties structure
  * \ingroup ilmClient
  **/
@@ -232,7 +231,7 @@ struct ilmSurfaceProperties
     t_ilm_uint updateCounter;               /*!< content updates of surface */
     t_ilm_uint pixelformat;                 /*!< pixel format of surface */
     t_ilm_uint nativeSurface;               /*!< native surface handle of surface */
-    ilmInputDevice inputDevicesAcceptance;  /*!< bitmask of ilmInputDevice from which the surface can accept input events */
+    t_ilm_unit inputfocus;                  /*!< bitmasks of ilmInputDeviceCapabilities.device_bitmask from which the surface is focused on devices*/
     t_ilm_bool chromaKeyEnabled;            /*!< chromakey validness of the surface */
     t_ilm_uint chromaKeyRed;                /*!< chromakey's red value of the surface */
     t_ilm_uint chromaKeyGreen;              /*!< chromakey's green value of the surface */
