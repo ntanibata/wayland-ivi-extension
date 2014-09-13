@@ -42,6 +42,11 @@
             <arg name="visibility" type="int"/>
         </event>
 
+        <event name="configure">
+            <arg name="width" type="int"/>
+            <arg name="height" type="int"/>
+        </event>
+
     </interface>
 
     <interface name="ivi_application" version="1">
