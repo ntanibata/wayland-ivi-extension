@@ -544,6 +544,7 @@ add_ordersurface_to_layer(struct surface_context *ctx_surf,
     }
 
     if (found == 0) {
+        wl_list_remove(&ctx_surf->order.link);
         wl_list_init(&ctx_surf->order.link);
         wl_list_insert(&ctx_layer->order.list_surface, &ctx_surf->order.link);
     }
