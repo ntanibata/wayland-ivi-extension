@@ -322,7 +322,18 @@ static void
 add_orderlayer_to_screen(struct layer_context *ctx_layer,
                          struct wl_output* output)
 {
-    struct screen_context *ctx_scrn = wl_output_get_user_data(output);
+    struct screen_context* scrn_link = NULL;
+    struct screen_context* ctx_scrn = NULL;
+    wl_list_for_each(scrn_link, &ctx_layer->ctx->list_screen, link) {
+        if (output == scrn_link->output) {
+            ctx_scrn = scrn_link;
+            break;
+	}
+    }
+
+    if (NULL == ctx_scrn) {
+        return;
+    }
 
     int found = 0;
     struct layer_context *layer_link;
@@ -334,6 +345,7 @@ add_orderlayer_to_screen(struct layer_context *ctx_layer,
     }
 
     if (found == 0) {
+        wl_list_remove(&ctx_layer->order.link);
         wl_list_init(&ctx_layer->order.link);
         wl_list_insert(&ctx_scrn->order.list_layer, &ctx_layer->order.link);
     }
