@@ -770,9 +770,33 @@ struct add_weston_surface_data {
     struct weston_surface *surface;
 };
 
+void
+execute_frame_callback_in_offscreen()
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    if (wl_list_empty(&shell_ext->list_nativesurface)) {
+        return;
+    }
+
+    struct ivi_nativesurface *p_nativesurface = NULL;
+    wl_list_for_each(p_nativesurface, &shell_ext->list_nativesurface, link)
+    {
+        if (NULL == p_nativesurface || NULL == p_nativesurface->surface) {
+            continue;
+        }
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        uint32_t time = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+        struct weston_surface *surf = p_nativesurface->surface;
+        weston_surface_force_frame_callback(surf, time);
+    }
+}
+
 static void
 send_nativesurface_event(struct wl_listener *listener, void *data)
 {
+    execute_frame_callback_in_offscreen();
+
     struct ivi_shell_ext *shell_ext = get_instance();
     if (wl_list_empty(&shell_ext->list_nativesurface)) {
         return;
