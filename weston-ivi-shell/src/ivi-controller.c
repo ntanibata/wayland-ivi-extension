@@ -34,6 +34,10 @@
 #include "ivi-layout-export.h"
 #include "bitmap.h"
 
+#ifdef USE_DRM
+#include "texture-sharing.h"
+#endif
+
 struct ivishell;
 struct ivilayer;
 struct iviscreen;
@@ -1271,6 +1275,9 @@ controller_screen_destroy(struct wl_client *client,
 
         wl_list_remove(&ctrlscrn->link);
         wl_resource_destroy(ctrlscrn->resource);
+#ifdef USE_DRM
+        cleanup_texture_sharing(client);
+#endif
         free(ctrlscrn);
         ctrlscrn = NULL;
         break;
@@ -1988,6 +1995,14 @@ module_init(struct weston_compositor *ec,
 
     memset(shell, 0, sizeof *shell);
     init_ivi_shell(ec, shell);
+
+#ifdef USE_DRM
+    int32_t init_ret = setup_texture_sharing(ec);
+    if (init_ret < 0) {
+        weston_log("Texture Sharing initialize failed. init_ret = %d\n", init_ret);
+        return init_ret;
+    }
+#endif
 
     if (wl_global_create(ec->wl_display, &ivi_controller_interface, 1,
                          shell, bind_ivi_controller) == NULL) {
