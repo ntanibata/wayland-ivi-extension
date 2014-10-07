@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="shareextension">
+
+    <copyright>
+        Copyright (c) 2012 Advanced Driver Information Technology.
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in
+        all copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+    </copyright>
+
+    <interface name="wl_share_ext" version="2">
+        <request name="get_share_surface">
+        <arg name="id" type="new_id" interface="wl_share_surface_ext"/>
+        <arg name="pid" type="uint"/>
+        <arg name="title" type="string" allow-null="true"/>
+        </request>
+    </interface>
+
+    <interface name="wl_share_surface_ext" version="2">
+        <description summary="extension interface for sharing the surface">
+        </description>
+
+        <request name="destroy" type="destructor">
+            <description summary="delete share surface">
+              Deletes the surface and invalidates its object ID.
+            </description>
+        </request>
+
+        <enum name="type">
+            <description summary="name type">
+            </description>
+            <entry name="gbm" value="0"/>
+            <entry name="unknown" value="1"/>
+        </enum>
+
+        <enum name="format">
+            <description summary="share surface format">
+            </description>
+            <entry name="argb8888" value="0"/>
+            <entry name="xrgb8888" value="1"/>
+            <entry name="unknown" value="2"/>
+        </enum>
+
+        <event name="update">
+            <description summary="update">
+            </description>
+
+            <arg name="id" type="uint"/>
+            <arg name="name" type="uint"/>
+        </event>
+
+        <event name="configure">
+            <description summary="configuration of share surface">
+            </description>
+
+            <arg name="id" type="uint"/>
+            <arg name="type" type="uint"/>
+            <arg name="width" type="uint"/>
+            <arg name="height" type="uint"/>
+            <arg name="stride" type="uint"/>
+            <arg name="format" type="uint"/>
+        </event>
+
+        <!-- Version 2 additions -->
+
+        <enum name="input_caps">
+            <description summary="input capability bitmask"/>
+            <entry name="pointer" value="1" summary="Shared surface can receive a pointer event"/>
+            <entry name="keyboard" value="2" summary="Shared surface can receive a keyboard event"/>
+            <entry name="touch" value="4" summary="Shared surface can receive a touch event"/>
+        </enum>
+
+        <event name="input_capabilities" since="2">
+            <description summary="seat capabilities of shared surface"/>
+            <arg name="capabilities" type="uint"/>
+        </event>
+
+        <request name="redirect_touch_down" since="2">
+            <description summary="redirect touch down event"/>
+            <arg name="serial" type="uint"/>
+            <arg name="id" type="int" summary="the unique ID of this touch point"/>
+            <arg name="x" type="fixed" summary="x coordinate in shared surface-relative coordinates"/>
+            <arg name="y" type="fixed" summary="y coordinate in shared surface-relative coordinates"/>
+        </request>
+
+        <request name="redirect_touch_up" since="2">
+            <description summary="redirect end of touch event sequence"/>
+            <arg name="serial" type="uint"/>
+            <arg name="id" type="int" summary="the unique ID of this touch point"/>
+        </request>
+
+        <request name="redirect_touch_motion" since="2">
+            <description summary="redirect update of touch point coordinates"/>
+            <arg name="id" type="int" summary="the unique ID of this touch point"/>
+            <arg name="x" type="fixed" summary="x coordinate in shared surface-relative coordinates"/>
+            <arg name="y" type="fixed" summary="y coordinate in shared surface-relative coordinates"/>
+        </request>
+
+        <request name="redirect_touch_frame" since="2">
+            <description summary="end of touch frame event"/>
+        </request>
+
+        <request name="redirect_touch_cancel" since="2">
+            <description summary="touch session cancelled"/>
+        </request>
+    </interface>
+</protocol>
