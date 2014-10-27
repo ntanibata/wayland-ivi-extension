@@ -1102,7 +1102,8 @@ controller_surface_set_input_focus(struct wl_client *client,
 
     if (device & IVI_CONTROLLER_SURFACE_INPUT_DEVICE_KEYBOARD) {
         if (enabled) {
-            ivi_layout_SetKeyboardFocusOn(ivisurf->layout_surface);
+            uint32_t id = ivi_layout_getIdOfSurface(ivisurf->layout_surface);
+            ivi_layout_SetKeyboardFocusOn(&id, 1);
             send_all_keyboard_focus(ivisurf->shell);
         }
     }
