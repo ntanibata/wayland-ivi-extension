@@ -668,6 +668,17 @@ COMMAND("get keyboard focus")
 }
 
 //=============================================================================
+COMMAND("set keyboard focus <idarray>")
+//=============================================================================
+{
+    t_ilm_surface *surfaceids = NULL;
+    unsigned int surfaceidCount;
+    input->getUintArray("idarray", &surfaceids, &surfaceidCount);
+
+    ilm_SetKeyboardMultiFocus(surfaceids, surfaceidCount);
+}
+
+//=============================================================================
 COMMAND("set surface <surfaceid> accept <acceptance> input events from devices <kbd:pointer:touch>")
 //=============================================================================
 {
