@@ -327,17 +327,8 @@ void printSurfaceProperties(unsigned int surfaceid, const char* prefix)
             << (p.inputDevicesAcceptance & ILM_INPUT_DEVICE_TOUCH ? "touch " : "")
             << "\n";
 
-    t_ilm_surface keyboardFocusSurfaceId;
-    callResult = ilm_GetKeyboardFocusSurfaceId(&keyboardFocusSurfaceId);
-    if (ILM_SUCCESS != callResult)
-    {
-        cout << "LayerManagerService returned: " << ILM_ERROR_STRING(callResult) << "\n";
-        cout << "Failed to get keyboard focus surface ID\n";
-        return;
-    }
-
     cout << prefix << "- has keyboard focus: "
-            << (keyboardFocusSurfaceId == surfaceid ? "true" : "false")
+            << (p.hasKeyboardFocus ? "true" : "false")
             << "\n";
 
     cout << prefix << "- chromakey:          "
