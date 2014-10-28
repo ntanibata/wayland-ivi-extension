@@ -631,6 +631,13 @@
             <arg name="error_text" type="string" allow-null="true"/>
         </event>
 
+        <request name="set_keyboard_focus">
+            <description summary="set multiple surfaces to have keyboard focus">
+                set_keyboard_focus will take an array of surfaces, and set
+                keyboard focus to those surfaces.
+            </description>
+            <arg name="surfaces" type="array"/>
+
     </interface>
 
 </protocol>

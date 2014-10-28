@@ -1593,10 +1593,21 @@ controller_surface_create(struct wl_client *client,
                        &prop, IVI_NOTIFICATION_ALL);
 }
 
+static void
+controller_set_keyboard_focus(struct wl_client *client,
+                              struct wl_resource *resource,
+                              struct wl_array *surfaces)
+{
+    struct ivicontroller *ctrl = wl_resource_get_user_data(resource);
+    ivi_layout_SetKeyboardFocusOn(surfaces->data, surfaces->size);
+    send_all_keyboard_focus(ctrl->shell);
+}
+
 static const struct ivi_controller_interface controller_implementation = {
     controller_commit_changes,
     controller_layer_create,
-    controller_surface_create
+    controller_surface_create,
+    controller_set_keyboard_focus
 };
 
 static void

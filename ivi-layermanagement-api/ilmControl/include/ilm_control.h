@@ -394,6 +394,20 @@ ilmErrorTypes ilm_SetKeyboardFocusOn(t_ilm_surface surfaceId);
 ilmErrorTypes ilm_GetKeyboardFocusSurfaceId(t_ilm_surface* pSurfaceId);
 
 /**
+ * \brief Set the keyboard focus to multiple surfaces
+ * To receive keyboard events, 2 conditions must be fulfilled:
+ *  1- The surface must accept events from keyboard. See ilm_UpdateInputEventAcceptanceOn
+ *  2- The keyboard focus must be set on that surface
+ *
+ * \ingroup ilmControl
+ * \param[in] pSurfaceIds Pointer to an array of surface IDs
+ * \param[in] number The number of surface IDs to set
+ * \return ILM_SUCCESS if the method call was successful
+ * \return ILM_FAILED if the client can not call the method on the service.
+ */
+ilmErrorTypes ilm_SetKeyboardMultiFocus(t_ilm_surface *pSurfaceIds, t_ilm_int number);
+
+/**
  * \brief Set the destination area of a surface within a layer for rendering. The surface will be scaled to this rectangle for rendering.
  * \ingroup ilmControl
  * \param[in] surfaceId Id of surface.

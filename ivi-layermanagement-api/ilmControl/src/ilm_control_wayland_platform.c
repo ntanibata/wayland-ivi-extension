@@ -2173,6 +2173,38 @@ ilm_GetKeyboardFocusSurfaceId(t_ilm_surface* pSurfaceId)
 }
 
 ILM_EXPORT ilmErrorTypes
+ilm_SetKeyboardMultiFocus(t_ilm_surface *pSurfaceIds, t_ilm_int number)
+{
+    struct ilm_control_context *ctx = sync_and_acquire_instance();
+    struct surface_context *ctx_surf;
+    unsigned int i, send_elements = 0;
+    struct wl_array send_array;
+    ilmErrorTypes retval = ILM_FAILED;
+    uint32_t *data;
+
+    wl_array_init(&send_array);
+    wl_array_add(&send_array, sizeof(uint32_t) * number);
+
+    data = send_array.data;
+    for (i = 0; i < number; i++) {
+        ctx_surf = get_surface_context(&ctx->wl, (uint32_t) pSurfaceIds[i]);
+        if (ctx_surf->prop.inputDevicesAcceptance & ILM_INPUT_DEVICE_KEYBOARD) {
+            data[send_elements] = pSurfaceIds[i];
+            send_elements++;
+        }
+    }
+
+    if (send_elements > 0) {
+        ivi_controller_set_keyboard_focus(ctx->wl.controller, &send_array);
+        retval = ILM_SUCCESS;
+    }
+
+    wl_array_release(&send_array);
+    release_instance();
+    return retval;
+}
+
+ILM_EXPORT ilmErrorTypes
 ilm_surfaceSetDestinationRectangle(t_ilm_surface surfaceId,
                                    t_ilm_int x, t_ilm_int y,
                                    t_ilm_int width, t_ilm_int height)
