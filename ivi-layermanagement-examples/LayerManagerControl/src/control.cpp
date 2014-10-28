@@ -96,12 +96,23 @@ void setSurfaceKeyboardFocus(t_ilm_surface surface)
 
 void getKeyboardFocus()
 {
-    t_ilm_surface surfaceId;
+    t_ilm_surface surfaceIds[1024];
+    t_ilm_int surfaceCount;
 
-    ilmErrorTypes callResult = ilm_GetKeyboardFocusSurfaceId(&surfaceId);
+    ilmErrorTypes callResult;
+
+    callResult = ilm_GetKeyboardMultiFocusSurfaceIds((t_ilm_surface*)surfaceIds,
+                                                     1024, &surfaceCount);
     if (ILM_SUCCESS == callResult)
     {
-        cout << "keyboardFocusSurfaceId == " << surfaceId << endl;
+        cout << "keyboardFocusSurfaceId == ";
+        for (int i = 0; i < surfaceCount; i++)
+        {
+            cout << surfaceIds[i];
+            if (i + 1 < surfaceCount)
+                cout << ",";
+        }
+        cout << endl;
     }
     else
     {

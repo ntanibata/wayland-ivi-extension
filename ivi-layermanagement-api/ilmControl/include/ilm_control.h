@@ -408,6 +408,17 @@ ilmErrorTypes ilm_GetKeyboardFocusSurfaceId(t_ilm_surface* pSurfaceId);
 ilmErrorTypes ilm_SetKeyboardMultiFocus(t_ilm_surface *pSurfaceIds, t_ilm_int number);
 
 /**
+ * \brief Get the indentifiers of all the surfaces that have keyboard focus
+ *
+ * \ingroup ilmControl
+ * \param[out] pSurfaceIds Pointer to the list of surface IDs
+ * \param[in]  size The total available number of elements in pSurfaceIds
+ * \param[out] pCount Pointer to the number of surface IDs that were returned
+ * \return ILM_SUCCESS if the method call was successful
+ * \return ILM_FAILED if the client can not call the method on the service.
+ */
+ilmErrorTypes ilm_GetKeyboardMultiFocusSurfaceIds(t_ilm_surface *pSurfaceIds, t_ilm_int size, t_ilm_int *pCount);
+/**
  * \brief Set the destination area of a surface within a layer for rendering. The surface will be scaled to this rectangle for rendering.
  * \ingroup ilmControl
  * \param[in] surfaceId Id of surface.

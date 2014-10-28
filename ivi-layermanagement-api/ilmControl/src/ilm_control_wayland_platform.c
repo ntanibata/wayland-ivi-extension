@@ -2205,6 +2205,30 @@ ilm_SetKeyboardMultiFocus(t_ilm_surface *pSurfaceIds, t_ilm_int number)
 }
 
 ILM_EXPORT ilmErrorTypes
+ilm_GetKeyboardMultiFocusSurfaceIds(t_ilm_surface *pSurfaceIds, t_ilm_int size,
+                                    t_ilm_int *pCount)
+{
+    struct ilm_control_context *ctx = sync_and_acquire_instance();
+    struct surface_context *ctx_surf;
+
+    *pCount = 0;
+    wl_list_for_each(ctx_surf, &ctx->wl.list_surface, link) {
+        if (ctx_surf->prop.hasKeyboardFocus) {
+            if (*pCount >= size) {
+                fprintf(stderr, "not enough space to store surface IDs\n");
+                break;
+            }
+            pSurfaceIds[*pCount] = ctx_surf->id_surface;
+            (*pCount)++;
+        }
+    }
+
+    release_instance();
+
+    return ILM_SUCCESS;
+}
+
+ILM_EXPORT ilmErrorTypes
 ilm_surfaceSetDestinationRectangle(t_ilm_surface surfaceId,
                                    t_ilm_int x, t_ilm_int y,
                                    t_ilm_int width, t_ilm_int height)
