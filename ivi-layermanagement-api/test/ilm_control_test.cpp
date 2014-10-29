@@ -998,6 +998,41 @@ TEST_F(IlmCommandTest, ilm_keyboard_focus) {
     EXPECT_EQ(surface1, surface);
 }
 
+TEST_F(IlmCommandTest, ilm_keyboard_multi_focus) {
+    uint surfacelist[2];
+    int surfacelistcount;
+    uint surface1 = 36;
+    uint surface2 = 44;
+
+    ASSERT_EQ(ILM_SUCCESS, ilm_surfaceCreate((t_ilm_nativehandle)wlSurfaces[0], 0, 0, ILM_PIXELFORMAT_RGBA_8888, &surface1));
+    ASSERT_EQ(ILM_SUCCESS, ilm_surfaceCreate((t_ilm_nativehandle)wlSurfaces[1], 0, 0, ILM_PIXELFORMAT_RGBA_8888, &surface2));
+
+    /* No focus */
+    ASSERT_EQ(ILM_SUCCESS, ilm_GetKeyboardMultiFocusSurfaceIds(surfacelist, 2, &surfacelistcount));
+    EXPECT_EQ(0, surfacelistcount);
+
+    /* Multiple focus */
+    surfacelist[0] = surface1;
+    surfacelist[1] = surface2;
+    ASSERT_EQ(ILM_SUCCESS, ilm_SetKeyboardMultiFocus(surfacelist, 2));
+    surfacelist[0] = 0xFFFFFFFF;
+    surfacelist[1] = 0xFFFFFFFF;
+    surfacelistcount = 0;
+    ASSERT_EQ(ILM_SUCCESS, ilm_GetKeyboardMultiFocusSurfaceIds(surfacelist, 2, &surfacelistcount));
+    EXPECT_EQ(2, surfacelistcount);
+    EXPECT_TRUE(contains(surfacelist, surfacelistcount, surface1));
+    EXPECT_TRUE(contains(surfacelist, surfacelistcount, surface2));
+
+    /* Single focus */
+    surfacelist[0] = surface2;
+    ASSERT_EQ(ILM_SUCCESS, ilm_SetKeyboardMultiFocus(surfacelist, 1));
+    surfacelist[0] = 0xFFFFFFFF;
+    surfacelistcount = 0;
+    ASSERT_EQ(ILM_SUCCESS, ilm_GetKeyboardMultiFocusSurfaceIds(surfacelist, 2, &surfacelistcount));
+    EXPECT_EQ(1, surfacelistcount);
+    EXPECT_EQ(surface2, surfacelist[0]);
+}
+
 TEST_F(IlmCommandTest, ilm_input_event_acceptance) {
     uint surface;
     uint surface1 = 36;
