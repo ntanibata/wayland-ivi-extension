@@ -630,6 +630,7 @@ share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
         wl_share_surface_ext_send_input_capabilities(client_link->resource, caps);
 
         ivi_layout_surface_set_is_forced_configure_event(nativesurf->surface, true);
+
         return;
     }
 }
