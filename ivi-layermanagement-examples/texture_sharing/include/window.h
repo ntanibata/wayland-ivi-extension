@@ -58,6 +58,10 @@ struct WaylandDisplay
     struct wl_compositor *p_compositor;
     struct wl_shell      *p_shell;
     struct wl_shell_surface *p_shell_surface;
+    struct wl_seat       *seat;
+    struct wl_pointer    *pointer;
+    struct wl_touch      *touch;
+    struct wl_keyboard   *keyboard;
     EGLDisplay            egldisplay;
     EGLConfig             eglconfig;
     EGLContext            eglcontext;

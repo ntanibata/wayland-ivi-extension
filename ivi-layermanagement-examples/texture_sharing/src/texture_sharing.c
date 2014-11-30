@@ -980,6 +980,7 @@ main(int argc, char **argv)
     p_info->p_share = &ts;
     p_info->pid     = atoi(argv[1]);
     p_info->p_window_title = strdup(argv[2]);
+    wl_list_insert(ts.share_surface_list.prev, &p_info->link);
 
     return texture_sharing_main(&ts);
 }

@@ -7,7 +7,9 @@
 #include <gbm.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
+#include "wayland-server.h"
 #include "weston/compositor.h"
 #include "ivi-share-extension-server-protocol.h"
 #include "texture-sharing.h"
@@ -43,6 +45,7 @@ struct ivi_nativesurface_client_link
     struct wl_client *client;
     bool firstSendConfigureComp;
     struct wl_list link;                         /* ivi_nativesurface link */
+    struct ivi_nativesurface *parent;
 };
 
 struct shell_surface
@@ -62,6 +65,7 @@ struct ivi_shell_ext
     struct wl_listener destroy_listener;
     struct wl_list list_shell_surface;           /* shell_surface list */
     struct wl_list list_nativesurface;           /* ivi_nativesurface list */
+    struct wl_list list_redirect_target;	 /* redirect_target list */
 };
 
 enum ivi_sharesurface_updatetype
@@ -117,6 +121,14 @@ struct drm_compositor {
 	struct udev_input input;
 };
 
+struct redirect_target {
+	struct wl_client *client;
+	struct wl_resource *resource;
+	struct wl_resource *target_resource;
+	uint32_t id;
+	struct wl_list link;
+};
+
 static struct ivi_shell_ext *
 get_instance(void)
 {
@@ -125,6 +137,7 @@ get_instance(void)
         shell_ext = calloc(1, sizeof(*shell_ext));
         wl_list_init(&shell_ext->list_shell_surface);
         wl_list_init(&shell_ext->list_nativesurface);
+	wl_list_init(&shell_ext->list_redirect_target);
     }
     return shell_ext;
 }
@@ -281,6 +294,176 @@ share_surface_destroy(struct wl_client *client,
     remove_client_link(client_link);
 }
 
+static uint32_t
+get_event_time()
+{
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+static struct weston_seat *
+get_weston_seat(struct weston_compositor *compositor, struct ivi_nativesurface_client_link *client_link)
+{
+    assert(compositor);
+    assert(client_link);
+
+    struct weston_seat *link = NULL;
+    struct wl_client *target_client = wl_resource_get_client(client_link->parent->surface->resource);
+
+    wl_list_for_each(link, &compositor->seat_list, link) {
+        struct wl_resource *res;
+        wl_list_for_each(res, &link->base_resource_list, link) {
+            struct wl_client *client = wl_resource_get_client(res);
+            if (target_client == client && link->touch != NULL) {
+                return link;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+static void
+share_surface_redirect_touch_down(struct wl_client *client,
+                                  struct wl_resource *resource,
+                                  uint32_t serial,
+                                  int32_t id,
+                                  wl_fixed_t x,
+                                  wl_fixed_t y)
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_compositor *compositor = shell_ext->wc;
+    struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
+    struct weston_seat *seat = NULL;
+    struct wl_resource *target_resource = NULL;
+    uint32_t time = get_event_time();
+    struct redirect_target *redirect_target = malloc(sizeof *redirect_target);
+    struct wl_resource *surface_resource = client_link->parent->surface->resource;
+
+    seat = get_weston_seat(compositor, client_link);
+    if (seat == NULL) {
+        return;
+    }
+
+    wl_list_for_each(target_resource, &seat->touch->resource_list, link) {
+        if (wl_resource_get_client(target_resource) == wl_resource_get_client(surface_resource)) {
+            uint32_t new_serial = wl_display_next_serial(compositor->wl_display);
+            wl_touch_send_down(target_resource, new_serial, time, surface_resource, id, x, y);
+            break;
+        }
+    }
+
+    redirect_target->client = client;
+    redirect_target->resource = resource;
+    redirect_target->target_resource = target_resource;
+    redirect_target->id = id;
+    wl_list_insert(&shell_ext->list_redirect_target, &redirect_target->link);
+}
+
+static void
+share_surface_redirect_touch_up(struct wl_client *client,
+                                struct wl_resource *resource,
+                                uint32_t serial,
+                                int32_t id)
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_compositor *compositor = shell_ext->wc;
+    struct redirect_target *redirect_target = NULL;
+    struct redirect_target *next = NULL;
+    uint32_t new_serial = wl_display_next_serial(compositor->wl_display);
+    uint32_t time = get_event_time();
+
+    wl_list_for_each_safe(redirect_target, next, &shell_ext->list_redirect_target, link) {
+        if (client == redirect_target->client && resource == redirect_target->resource && id == redirect_target->id) {
+            wl_touch_send_up(redirect_target->target_resource, new_serial, time, id);
+            wl_list_remove(&redirect_target->link);
+            free(redirect_target);
+            break;
+        }
+    }
+
+}
+
+static void
+share_surface_redirect_touch_motion(struct wl_client *client,
+                                    struct wl_resource *resource,
+                                    int32_t id,
+                                    wl_fixed_t x,
+                                    wl_fixed_t y)
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_compositor *compositor = shell_ext->wc;
+    struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
+    struct weston_seat *seat = NULL;
+    struct wl_resource *target_resource = NULL;
+    uint32_t time = get_event_time();
+    struct wl_resource *surface_resource = client_link->parent->surface->resource;
+
+    seat = get_weston_seat(compositor, client_link);
+    if (seat == NULL) {
+        return;
+    }
+
+    wl_list_for_each(target_resource, &seat->touch->resource_list, link) {
+        if (wl_resource_get_client(target_resource) == wl_resource_get_client(surface_resource)) {
+            wl_touch_send_motion(target_resource, time, id, x, y);
+            break;
+        }
+    }
+}
+
+static void
+share_surface_redirect_touch_frame(struct wl_client *client,
+                                   struct wl_resource *resource)
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_compositor *compositor = shell_ext->wc;
+    struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
+    struct weston_seat *seat = NULL;
+    struct wl_resource *target_resource = NULL;
+    struct wl_resource *surface_resource = client_link->parent->surface->resource;
+
+    seat = get_weston_seat(compositor, client_link);
+    if (seat == NULL) {
+        return;
+    }
+
+    wl_list_for_each(target_resource, &seat->touch->resource_list, link) {
+        if (wl_resource_get_client(target_resource) == wl_resource_get_client(surface_resource)) {
+            wl_touch_send_frame(target_resource);
+            break;
+        }
+    }
+}
+
+static void
+share_surface_redirect_touch_cancel(struct wl_client *client,
+                                     struct wl_resource *resource)
+{
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_compositor *compositor = shell_ext->wc;
+    struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
+    struct weston_seat *seat = NULL;
+    struct wl_resource *target_resource = NULL;
+    uint32_t time = get_event_time();
+    struct wl_resource *surface_resource = client_link->parent->surface->resource;
+
+    seat = get_weston_seat(compositor, client_link);
+    if (seat == NULL) {
+        return;
+    }
+
+    wl_list_for_each(target_resource, &seat->touch->resource_list, link) {
+        if (wl_resource_get_client(target_resource) == wl_resource_get_client(surface_resource)) {
+            wl_touch_send_cancel(target_resource);
+            break;
+        }
+    }
+}
+
 static void
 nativesurface_destroy(struct wl_listener *listener, void *data)
 {
@@ -303,6 +486,11 @@ nativesurface_destroy(struct wl_listener *listener, void *data)
 static const
 struct wl_share_surface_ext_interface share_surface_ext_implementation = {
     share_surface_destroy,
+    share_surface_redirect_touch_down,
+    share_surface_redirect_touch_up,
+    share_surface_redirect_touch_motion,
+    share_surface_redirect_touch_frame,
+    share_surface_redirect_touch_cancel
 };
 
 static struct ivi_nativesurface*
@@ -323,22 +511,23 @@ find_nativesurface(uint32_t pid, const char *title)
     return NULL;
 }
 
-static void
+static struct ivi_nativesurface_client_link *
 add_nativesurface_client(struct ivi_nativesurface *nativesurface,
                          uint32_t id, struct wl_client *client)
 {
     struct ivi_nativesurface_client_link *link = malloc(sizeof(*link));
     if (NULL == link) {
-        return;
+        return NULL;
     }
 
-    link->resource = wl_resource_create(client, &wl_share_surface_ext_interface, 1, id);
+    link->resource = wl_resource_create(client, &wl_share_surface_ext_interface, 2, id);
     link->client = client;
     link->firstSendConfigureComp = false;
+    link->parent = nativesurface;
 
     wl_resource_set_implementation(link->resource, &share_surface_ext_implementation, link, NULL);
     wl_list_insert(&nativesurface->client_list, &link->link);
-    return;
+    return link;
 }
 
 struct ivi_nativesurface*
@@ -368,6 +557,34 @@ alloc_nativesurface(struct weston_surface *surface, uint32_t id, uint32_t pid,
     return nativesurface;
 }
 
+static uint32_t
+get_shared_client_input_caps(struct ivi_nativesurface_client_link *client_link)
+{
+    uint32_t caps = 0;
+    struct ivi_shell_ext *shell_ext = get_instance();
+    struct weston_seat *seat = get_weston_seat(shell_ext->wc, client_link);
+    struct wl_client *creator = wl_resource_get_client(client_link->parent->surface->resource);
+
+    if (seat->touch != NULL) {
+        struct wl_resource *resource = NULL;
+        wl_list_for_each(resource, &seat->touch->focus_resource_list, link) {
+            if (wl_resource_get_client(resource) == creator) {
+                caps |= (uint32_t)WL_SHARE_SURFACE_EXT_INPUT_CAPS_TOUCH;
+                break;
+            }
+        }
+
+        wl_list_for_each(resource, &seat->touch->resource_list, link) {
+            if (wl_resource_get_client(resource) == creator) {
+                caps |= (uint32_t)WL_SHARE_SURFACE_EXT_INPUT_CAPS_TOUCH;
+                break;
+            }
+        }
+    }
+
+    return caps;
+}
+
 void
 share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
     uint32_t id, uint32_t pid, const char *title)
@@ -378,6 +595,8 @@ share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
 
     struct shell_surface *shsurf = NULL;
     struct ivi_shell_ext *shell_ext = get_instance();
+    struct ivi_nativesurface_client_link *client_link = NULL;
+    uint32_t caps = 0;
     wl_list_for_each(shsurf, &shell_ext->list_shell_surface, link) {
         if (pid != shsurf->pid) {
             continue;
@@ -403,7 +622,10 @@ share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
             }
             wl_list_insert(&shell_ext->list_nativesurface, &nativesurf->link);
         }
-        add_nativesurface_client(nativesurf, id, client);
+        client_link = add_nativesurface_client(nativesurf, id, client);
+        caps = get_shared_client_input_caps(client_link);
+        wl_share_surface_ext_send_input_capabilities(client_link->resource, caps);
+
         return;
     }
 }
@@ -563,6 +785,7 @@ create_shell_surface(struct wl_client *client,
     wl_resource_set_implementation(shsurf->resource,
                                    &g_surface_interface,
                                    shsurf, remove_shell_surface);
+
     return shsurf;
 }
 
@@ -856,7 +1079,7 @@ texture_sharing_init(struct weston_compositor *wc)
     }
 
     struct ivi_shell_ext *shell_ext = get_instance();
-    if (NULL == wl_global_create(wc->wl_display, &wl_share_ext_interface, 1,
+    if (NULL == wl_global_create(wc->wl_display, &wl_share_ext_interface, 2,
                                  shell_ext, bind_share_interface)) {
         weston_log("Texture Sharing, Failed to global create\n");
         return -1;

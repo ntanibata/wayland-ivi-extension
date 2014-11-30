@@ -60,6 +60,67 @@ enum {
 };
 
 /*** Event handlers ***********************************************************/
+static void
+touch_handle_down(void *data, struct wl_touch *wl_touch,
+                  uint32_t serial, uint32_t time, struct wl_surface *surface,
+                  int32_t id, wl_fixed_t x, wl_fixed_t y)
+{
+    printf("[%s(%d)] window.c pid=%u, id=%d, x=%d, y=%d\n", __func__, __LINE__, getpid(), x, y, id);
+}
+
+static void
+touch_handle_up(void *data, struct wl_touch *wl_touch,
+                uint32_t serial, uint32_t time, int32_t id)
+{
+    printf("[%s(%d)] window.c pid=%u id=%d\n", __func__, __LINE__, getpid(), id);
+}
+
+static void
+touch_handle_motion(void *data, struct wl_touch *wl_touch,
+                    uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
+{
+    printf("[%s(%d)] window.c pid=%u, id=%d, x=%d, y=%d\n", __func__, __LINE__, getpid(), id, x, y);
+}
+
+static void
+touch_handle_frame(void *data, struct wl_touch *wl_touch)
+{
+    printf("[%s(%d)] window.c pid=%u\n", __func__, __LINE__, getpid());
+}
+
+static void
+touch_handle_cancel(void *data, struct wl_touch *wl_touch)
+{
+    printf("[%s(%d)] window.c pid=%u\n", __func__, __LINE__, getpid());
+}
+
+static const struct wl_touch_listener touch_listener = {
+    touch_handle_down,
+    touch_handle_up,
+    touch_handle_motion,
+    touch_handle_frame,
+    touch_handle_cancel,
+};
+
+static void
+seat_handle_capabilities(void *data, struct wl_seat *seat,
+             enum wl_seat_capability caps)
+{
+    struct WaylandDisplay *d = data;
+
+    if ((caps & WL_SEAT_CAPABILITY_TOUCH) && !d->touch) {
+        d->touch = wl_seat_get_touch(seat);
+        wl_touch_set_user_data(d->touch, d);
+        wl_touch_add_listener(d->touch, &touch_listener, d);
+    } else if (!(caps & WL_SEAT_CAPABILITY_TOUCH) && d->touch) {
+        wl_touch_destroy(d->touch);
+        d->touch = NULL;
+    }
+}
+
+static const struct wl_seat_listener seat_listener = {
+    seat_handle_capabilities
+};
 
 /**
  * wl_registry event handlers
@@ -89,6 +150,12 @@ registry_handle_global(void *p_data, struct wl_registry *p_registry,
     {
         p_display->p_shell = wl_registry_bind(p_registry, id,
                 &wl_shell_interface, 1);
+    }
+    else if (0 == strcmp(p_interface, "wl_seat"))
+    {
+        p_display->seat = wl_registry_bind(p_registry, id,
+            &wl_seat_interface, 1);
+        wl_seat_add_listener(p_display->seat, &seat_listener, p_display);
     }
 
     if (p_display->global_handler)

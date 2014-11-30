@@ -124,13 +124,27 @@ static void
 texture_sharing_api_input_caps_event(void *p_data,
     struct wl_share_surface_ext *p_share_surf, uint32_t caps)
 {
-    (void)p_data;
     (void)p_share_surf;
     (void)caps;
+    struct ShareSurfaceInfo *p_info = (struct ShareSurfaceInfo*)p_data;
 
     if (NULL != gp_test_params)
     {
         gp_test_params->received_input_caps = TRUE;
+    }
+
+    if (NULL != p_info)
+    {
+        if (caps & WL_SHARE_SURFACE_EXT_INPUT_CAPS_TOUCH)
+        {
+            p_info->enable_touch_event_redirection = 1;
+        }
+        else
+        {
+            fprintf(stderr, "[WARNING] The share_surface does not have\n"
+                            "          the capability to recive a touch event.\n");
+            p_info->enable_touch_event_redirection = 0;
+        }
     }
 }
 
@@ -198,6 +212,7 @@ texture_sharing_api_main_01(test_params *p_test_params, S32 sub_testcase)
     ts.height     = p_test_params->height;
     ts.surface_id = p_test_params->surface_id;
     ts.layer_id   = p_test_params->layer_id;
+    ts.bind_seat = 1;
     ts.enable_listener = 1;
     ts.share_surface_listener.update    = texture_sharing_api_update_event;
     ts.share_surface_listener.configure = texture_sharing_api_configure_event;
