@@ -412,7 +412,7 @@ send_surface_add_event(struct ivisurface *ivisurf,
 static void
 send_surface_event(struct wl_resource *resource,
                    struct ivisurface *ivisurf,
-                   struct ivi_layout_surface_properties *prop,
+                   const struct ivi_layout_surface_properties *prop,
                    uint32_t mask)
 {
     if (mask & IVI_NOTIFICATION_OPACITY) {
@@ -436,10 +436,6 @@ send_surface_event(struct wl_resource *resource,
     if (mask & IVI_NOTIFICATION_VISIBILITY) {
         ivi_controller_surface_send_visibility(resource,
                                                prop->visibility);
-    }
-    if (mask & IVI_NOTIFICATION_PIXELFORMAT) {
-        ivi_controller_surface_send_pixelformat(resource,
-                                                prop->pixelformat);
     }
     if (mask & IVI_NOTIFICATION_REMOVE) {
         send_surface_add_event(ivisurf, resource, IVI_NOTIFICATION_REMOVE);
@@ -506,7 +502,7 @@ update_surface_prop(struct ivisurface *ivisurf,
 
 static void
 send_surface_prop(struct ivi_layout_surface *layout_surface,
-                  struct ivi_layout_surface_properties *prop,
+                  const struct ivi_layout_surface_properties *prop,
                   enum ivi_layout_notification_mask mask,
                   void *userdata)
 {
@@ -586,7 +582,7 @@ send_layer_add_event(struct ivilayer *ivilayer,
 static void
 send_layer_event(struct wl_resource *resource,
                  struct ivilayer *ivilayer,
-                 struct ivi_layout_layer_properties *prop,
+                 const struct ivi_layout_layer_properties *prop,
                  uint32_t mask)
 {
     if (mask & IVI_NOTIFICATION_OPACITY) {
@@ -682,7 +678,7 @@ update_layer_prop(struct ivilayer *ivilayer,
 
 static void
 send_layer_prop(struct ivi_layout_layer *layer,
-                struct ivi_layout_layer_properties *prop,
+                const struct ivi_layout_layer_properties *prop,
                 enum ivi_layout_notification_mask mask,
                 void *userdata)
 {
@@ -709,7 +705,7 @@ controller_surface_set_opacity(struct wl_client *client,
 {
     struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
     (void)client;
-    ivi_layout_surface_set_opacity(ivisurf->layout_surface, (float)opacity);
+    ivi_layout_surface_set_opacity(ivisurf->layout_surface, opacity);
 }
 
 static void
@@ -936,7 +932,7 @@ clear_viewlist_but_specified_surface(struct weston_compositor *compositor,
 }
 
 static void
-get_gl_surface_rectangle(struct ivi_layout_surface_properties *prop,
+get_gl_surface_rectangle(const struct ivi_layout_surface_properties *prop,
                          int32_t *x,
                          int32_t *y,
                          int32_t *width,
@@ -962,7 +958,7 @@ gl_surface_screenshot(struct ivisurface *ivisurf,
     struct weston_view *view = NULL;
     struct weston_output *output = NULL;
     struct iviscreen *link_scrn = NULL;
-    struct ivi_layout_surface_properties prop = {};
+    const struct ivi_layout_surface_properties *prop;
     int32_t x = 0;
     int32_t y = 0;
     int32_t width = 0;
@@ -979,7 +975,8 @@ gl_surface_screenshot(struct ivisurface *ivisurf,
         return -1;
     }
 
-    if (ivi_layout_get_properties_of_surface(ivisurf->layout_surface, &prop) != 0) {
+    prop = ivi_layout_get_properties_of_surface(ivisurf->layout_surface);
+    if (prop != NULL) {
         fprintf(stderr, "Failed to get surface properties.");
         return -1;
     }
@@ -992,7 +989,7 @@ gl_surface_screenshot(struct ivisurface *ivisurf,
             view->plane = &compositor->primary_plane;
         }
 
-        get_gl_surface_rectangle(&prop, &x, &y, &width, &height);
+        get_gl_surface_rectangle(prop, &x, &y, &width, &height);
         dump_surface(link_scrn->output,
                      compositor,
                      filename,
@@ -1118,7 +1115,7 @@ controller_layer_set_opacity(struct wl_client *client,
 {
     struct ivilayer *ivilayer = wl_resource_get_user_data(resource);
     (void)client;
-    ivi_layout_layer_set_opacity(ivilayer->layout_layer, (float)opacity);
+    ivi_layout_layer_set_opacity(ivilayer->layout_layer, opacity);
 }
 
 static void
@@ -1410,7 +1407,7 @@ controller_layer_create(struct wl_client *client,
     struct ivi_layout_layer *layout_layer = NULL;
     struct ivicontroller_layer *ctrllayer = NULL;
     struct ivilayer *ivilayer = NULL;
-    struct ivi_layout_layer_properties prop;
+    const struct ivi_layout_layer_properties *prop;
 
     ivilayer = get_layer(&shell->list_layer, id_layer);
     if (ivilayer == NULL) {
@@ -1456,11 +1453,9 @@ controller_layer_create(struct wl_client *client,
                                    &controller_layer_implementation,
                                    ivilayer, destroy_ivicontroller_layer);
 
-    memset(&prop, 0, sizeof prop);
-
-    ivi_layout_get_properties_of_layer(ivilayer->layout_layer, &prop);
+    prop = ivi_layout_get_properties_of_layer(ivilayer->layout_layer);
     send_layer_event(ctrllayer->resource, ivilayer,
-                     &prop, IVI_NOTIFICATION_ALL);
+                     prop, IVI_NOTIFICATION_ALL);
 }
 
 static void
@@ -1484,7 +1479,7 @@ controller_surface_create(struct wl_client *client,
     struct ivicontroller *ctrl = wl_resource_get_user_data(resource);
     struct ivishell *shell = ctrl->shell;
     struct ivicontroller_surface *ctrlsurf = NULL;
-    struct ivi_layout_surface_properties prop;
+    const struct ivi_layout_surface_properties *prop;
     struct ivisurface *ivisurf = NULL;
     struct ivicontroller_surface *ctrl_link = NULL;
 
@@ -1534,13 +1529,11 @@ controller_surface_create(struct wl_client *client,
 
     ctrlsurf->implementation_set = 1;
 
-    memset(&prop, 0, sizeof prop);
-
-    ivi_layout_get_properties_of_surface(ivisurf->layout_surface, &prop);
+    prop = ivi_layout_get_properties_of_surface(ivisurf->layout_surface);
     ivi_layout_surface_set_content_observer(ivisurf->layout_surface, surface_event_content, shell);
 
     send_surface_event(ctrlsurf->resource, ivisurf,
-                       &prop, IVI_NOTIFICATION_ALL);
+                       prop, IVI_NOTIFICATION_ALL);
 }
 
 static const struct ivi_controller_interface controller_implementation = {
@@ -1845,7 +1838,7 @@ surface_event_configure(struct ivi_layout_surface *layout_surface,
     struct ivishell *shell = userdata;
     struct ivisurface *ivisurf = NULL;
     struct ivicontroller_surface *ctrlsurf = NULL;
-    struct ivi_layout_surface_properties prop;
+    const struct ivi_layout_surface_properties *prop;
     uint32_t id_surface = 0;
 
     id_surface = ivi_layout_get_id_of_surface(layout_surface);
@@ -1856,15 +1849,14 @@ surface_event_configure(struct ivi_layout_surface *layout_surface,
         return;
     }
 
-    memset(&prop, 0, sizeof prop);
-    ivi_layout_get_properties_of_surface(layout_surface, &prop);
+    prop = ivi_layout_get_properties_of_surface(layout_surface);
 
     wl_list_for_each(ctrlsurf, &shell->list_controller_surface, link) {
         if (id_surface != ctrlsurf->id_surface) {
             continue;
         }
         send_surface_event(ctrlsurf->resource, ivisurf,
-                           &prop, IVI_NOTIFICATION_ALL);
+                           prop, IVI_NOTIFICATION_ALL);
     }
 }
 
