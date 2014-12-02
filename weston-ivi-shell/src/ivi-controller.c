@@ -1020,28 +1020,10 @@ controller_surface_screenshot(struct wl_client *client,
                   struct wl_resource *resource,
                   const char *filename)
 {
-    struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
-    struct weston_surface *weston_surface = NULL;
-    int32_t width = 0;
-    int32_t height = 0;
-    int32_t stride = 0;
-
-    weston_surface = ivi_layout_surfaceGetWestonSurface(ivisurf->layout_surface);
-    if (weston_surface == NULL) {
-        fprintf(stderr, "Failed to get weston surface.\n");
-        return;
-    }
-
-    if (ivi_layout_surfaceGetSize(ivisurf->layout_surface, &width, &height, &stride) != 0) {
-        fprintf(stderr, "Failed to get surface size.\n");
-        return;
-    }
-
-    if (shm_surface_screenshot(weston_surface, width, height, stride, filename) != 0) {
-        if (gl_surface_screenshot(ivisurf, weston_surface, filename) != 0) {
-            fprintf(stderr, "Failed to capture surface.\n");
-        }
-    }
+    /* This interface has been supported yet. */
+    (void)client;
+    (void)resource;
+    (void)filename;
 }
 
 
@@ -1071,24 +1053,7 @@ controller_surface_destroy(struct wl_client *client,
 
 static void send_all_keyboard_focus(struct ivishell *shell)
 {
-    struct ivi_layout_SurfaceProperties props;
-    struct ivicontroller_surface *ctrlsurf;
-    struct ivisurface *current_surf;
-    uint32_t id_surface;
-
-    wl_list_for_each(current_surf, &shell->list_surface, link) {
-        ivi_layout_getPropertiesOfSurface(current_surf->layout_surface,
-                                          &props);
-        id_surface = ivi_layout_getIdOfSurface(current_surf->layout_surface);
-        wl_list_for_each(ctrlsurf, &shell->list_controller_surface, link) {
-            if (id_surface != ctrlsurf->id_surface) {
-                    continue;
-            }
-            ivi_controller_surface_send_input_focus(ctrlsurf->resource,
-                            IVI_CONTROLLER_SURFACE_INPUT_DEVICE_KEYBOARD,
-                            props.hasKeyboardFocus);
-        }
-    }
+    /* This interface has been supported yet */
 }
 
 static void
@@ -1097,15 +1062,11 @@ controller_surface_set_input_focus(struct wl_client *client,
               uint32_t device,
               int32_t enabled)
 {
+    /* This interface has been supported yet */
     (void)client;
-    struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
-
-    if (device & IVI_CONTROLLER_SURFACE_INPUT_DEVICE_KEYBOARD) {
-        if (enabled) {
-            ivi_layout_SetKeyboardFocusOn(ivisurf->layout_surface);
-            send_all_keyboard_focus(ivisurf->shell);
-        }
-    }
+    (void)resource;
+    (void)device;
+    (void)enabled;
 }
 
 static const
