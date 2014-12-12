@@ -980,8 +980,8 @@ gl_surface_screenshot(struct ivisurface *ivisurf,
     }
 
     prop = ivi_layout_get_properties_of_surface(ivisurf->layout_surface);
-    if (prop != NULL) {
-        fprintf(stderr, "Failed to get surface properties.");
+    if (prop == NULL) {
+        fprintf(stderr, "Failed to get surface properties.\n");
         return -1;
     }
 
@@ -1016,10 +1016,28 @@ controller_surface_screenshot(struct wl_client *client,
                   struct wl_resource *resource,
                   const char *filename)
 {
-    /* This interface has been supported yet. */
-    (void)client;
-    (void)resource;
-    (void)filename;
+    struct ivisurface *ivisurf = wl_resource_get_user_data(resource);
+    struct weston_surface *weston_surface = NULL;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t stride = 0;
+
+    weston_surface = ivi_layout_surface_get_weston_surface(ivisurf->layout_surface);
+    if (weston_surface == NULL) {
+        fprintf(stderr, "Failed to get weston surface.\n");
+        return;
+    }
+
+    if (ivi_layout_surface_get_size(ivisurf->layout_surface, &width, &height, &stride) != 0) {
+        fprintf(stderr, "Failed to get surface size.\n");
+        return;
+    }
+
+    if (shm_surface_screenshot(weston_surface, width, height, stride, filename) != 0) {
+        if (gl_surface_screenshot(ivisurf, weston_surface, filename) != 0) {
+            fprintf(stderr, "Failed to capture surface.\n");
+        }
+    }
 }
 
 
