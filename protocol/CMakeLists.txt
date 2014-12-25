@@ -75,6 +75,30 @@ add_custom_command(
     DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-controller.xml
 )
 
+add_custom_command(
+    OUTPUT  ivi-share-extension-client-protocol.h
+    COMMAND ${WAYLAND_SCANNER_EXECUTABLE} client-header
+            < ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-client-protocol.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+)
+
+add_custom_command(
+    OUTPUT  ivi-share-extension-server-protocol.h
+    COMMAND ${WAYLAND_SCANNER_EXECUTABLE} server-header
+            < ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-server-protocol.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+)
+
+add_custom_command(
+    OUTPUT  ivi-share-extension-protocol.c
+    COMMAND ${WAYLAND_SCANNER_EXECUTABLE} code
+            < ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-protocol.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/share-extension.xml
+)
+
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${WAYLAND_CLIENT_INCLUDE_DIRS}
@@ -93,7 +117,11 @@ add_library(${PROJECT_NAME} STATIC
     ${CMAKE_CURRENT_BINARY_DIR}/ivi-controller-client-protocol.h
     ${CMAKE_CURRENT_BINARY_DIR}/ivi-controller-server-protocol.h
     ${CMAKE_CURRENT_BINARY_DIR}/ivi-controller-protocol.c
+    ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-client-protocol.h
+    ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-server-protocol.h
+    ${CMAKE_CURRENT_BINARY_DIR}/ivi-share-extension-protocol.c
 )
+
 
 
 #=============================================================================================
@@ -152,3 +180,4 @@ add_custom_target(ivi-controller-doc
                   COMMENT "Generating ivi-controller-api-${IVI_EXTENSION_VERSION}.pdf"
 )
 
+# // TODO: documentation for share-extension API
