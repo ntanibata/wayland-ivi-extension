@@ -513,6 +513,17 @@ find_nativesurface(uint32_t pid, const char *title)
     return NULL;
 }
 
+static void
+destroy_link(struct wl_resource *resource)
+{
+    struct ivi_shell_ext *shell = get_instance();
+    struct ivi_nativesurface *link;
+    struct ivi_nativesurface *next;
+
+    struct ivi_nativesurface_client_link *data = wl_resource_get_user_data(resource);
+    wl_list_remove(&data->link);
+}
+
 static struct ivi_nativesurface_client_link *
 add_nativesurface_client(struct ivi_nativesurface *nativesurface,
                          uint32_t id, struct wl_client *client)
@@ -528,7 +539,7 @@ add_nativesurface_client(struct ivi_nativesurface *nativesurface,
     link->parent = nativesurface;
     link->configure_sent = false;
 
-    wl_resource_set_implementation(link->resource, &share_surface_ext_implementation, link, NULL);
+    wl_resource_set_implementation(link->resource, &share_surface_ext_implementation, link, destroy_link);
     wl_list_insert(&nativesurface->client_list, &link->link);
     return link;
 }
@@ -935,7 +946,6 @@ update_nativesurface(struct ivi_nativesurface *p_nativesurface)
     struct drm_compositor *dc = (struct drm_compositor *)shell_ext->wc;
     struct weston_buffer *buf = p_nativesurface->surface->buffer_ref.buffer;
     if (NULL == buf) {
-        weston_log("Can't get the weston_buffer.\n");
         return IVI_SHARESURFACE_STABLE;
     }
 
@@ -1032,7 +1042,8 @@ send_nativesurface_event(struct wl_listener *listener, void *data)
     }
 
     struct ivi_nativesurface *p_nativesurface = NULL;
-    wl_list_for_each(p_nativesurface, &shell_ext->list_nativesurface, link)
+    struct ivi_nativesurface *p_next = NULL;
+    wl_list_for_each_safe(p_nativesurface, p_next, &shell_ext->list_nativesurface, link)
     {
         if (NULL == p_nativesurface) {
             continue;
@@ -1041,6 +1052,7 @@ send_nativesurface_event(struct wl_listener *listener, void *data)
             (0 == p_nativesurface->id))
         {
             weston_log("Texture Sharing warning, Unnecessary nativesurface exists.");
+            wl_list_remove(&p_nativesurface->link);
             continue;
         }
         uint32_t send_flag = update_nativesurface(p_nativesurface);
