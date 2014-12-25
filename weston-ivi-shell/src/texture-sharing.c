@@ -160,7 +160,6 @@ remove_shell_surface(struct wl_resource *resource)
     }
 
     free(shsurf);
-    shsurf = NULL;
 }
 
 static void
@@ -177,7 +176,6 @@ free_nativesurface(struct ivi_nativesurface *nativesurf)
     nativesurf->surface_destroy_listener.notify = NULL;
     wl_list_remove(&nativesurf->surface_destroy_listener.link);
     free(nativesurf);
-    nativesurf = NULL;
 }
 
 void
@@ -195,11 +193,10 @@ cleanup_texture_sharing(struct wl_client *client)
         struct ivi_nativesurface_client_link *p_next = NULL;
         wl_list_for_each_safe(p_link, p_next, &nativesurf->client_list, link) {
             if (p_link->client == client) {
-                wl_list_remove(&p_link->link);
-                wl_resource_destroy(p_link->resource);
-                p_link->resource = NULL;
-                free(p_link);
-                p_link = NULL;
+                if (p_link->resource) {
+                    wl_resource_destroy(p_link->resource);
+                    p_link->resource = NULL;
+                }
 
                 if (wl_list_empty(&nativesurf->client_list))
                 {
@@ -227,11 +224,9 @@ remove_client_link(struct ivi_nativesurface_client_link *client_link)
         struct ivi_nativesurface_client_link *p_next = NULL;
         wl_list_for_each_safe(p_link, p_next, &nativesurf->client_list, link) {
             if (p_link == client_link) {
-                wl_list_remove(&p_link->link);
-                wl_resource_destroy(p_link->resource);
-                p_link->resource = NULL;
-                free(p_link);
-                p_link = NULL;
+                if (p_link->resource) {
+                    wl_resource_destroy(p_link->resource);
+                }
 
                 if (wl_list_empty(&nativesurf->client_list))
                 {
@@ -254,9 +249,9 @@ remove_nativesurface(struct ivi_nativesurface *nativesurf)
     struct ivi_nativesurface_client_link *p_link = NULL;
     struct ivi_nativesurface_client_link *p_next = NULL;
     wl_list_for_each_safe(p_link, p_next, &nativesurf->client_list, link) {
-        wl_list_remove(&p_link->link);
-        free(p_link);
-        p_link = NULL;
+        if (p_link->resource) {
+            wl_resource_destroy(p_link->resource);
+        }
     }
     wl_list_remove(&nativesurf->link);
     free_nativesurface(nativesurf);
@@ -272,11 +267,9 @@ ivi_shell_ext_destroy(struct wl_listener *listener, void *data)
     wl_list_for_each_safe(shsurf, p_next, &shell_ext->list_shell_surface, link) {
         wl_list_remove(&shsurf->link);
         free(shsurf);
-        shsurf = NULL;
     }
 
     free(shell_ext);
-    shell_ext = NULL;
 }
 
 static void
@@ -289,7 +282,7 @@ share_surface_destroy(struct wl_client *client,
 
     struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
     if (NULL == client_link) {
-        weston_log("Can not execute share_surface_destroy. p_resource == NULL");
+        weston_log("Can not execute share_surface_destroy. p_resource == NULL\n");
         return;
     }
 
@@ -514,14 +507,15 @@ find_nativesurface(uint32_t pid, const char *title)
 }
 
 static void
-destroy_link(struct wl_resource *resource)
+destroy_client_link(struct wl_resource *resource)
 {
     struct ivi_shell_ext *shell = get_instance();
     struct ivi_nativesurface *link;
     struct ivi_nativesurface *next;
+    struct ivi_nativesurface_client_link *client_link = wl_resource_get_user_data(resource);
 
-    struct ivi_nativesurface_client_link *data = wl_resource_get_user_data(resource);
-    wl_list_remove(&data->link);
+    wl_list_remove(&client_link->link);
+    free(client_link);
 }
 
 static struct ivi_nativesurface_client_link *
@@ -539,7 +533,7 @@ add_nativesurface_client(struct ivi_nativesurface *nativesurface,
     link->parent = nativesurface;
     link->configure_sent = false;
 
-    wl_resource_set_implementation(link->resource, &share_surface_ext_implementation, link, destroy_link);
+    wl_resource_set_implementation(link->resource, &share_surface_ext_implementation, link, destroy_client_link);
     wl_list_insert(&nativesurface->client_list, &link->link);
     return link;
 }
@@ -599,7 +593,7 @@ get_shared_client_input_caps(struct ivi_nativesurface_client_link *client_link)
     return caps;
 }
 
-void
+static void
 share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
     uint32_t id, uint32_t pid, const char *title)
 {
@@ -776,6 +770,23 @@ static struct wl_shell_surface_interface g_surface_interface = {
     weston_surface_set_class
 };
 
+static void
+set_shell_surface_implementation(struct wl_client *client,
+                                 uint32_t id_wl_shell,
+                                 struct shell_surface *shsurf)
+{
+    assert(client);
+    assert(shsurf);
+
+    shsurf->resource = wl_resource_create(client, &wl_shell_surface_interface,
+                                          1, id_wl_shell);
+
+    wl_resource_set_implementation(shsurf->resource,
+                                   &g_surface_interface,
+                                   shsurf,
+                                   remove_shell_surface);
+}
+
 static struct shell_surface *
 create_shell_surface(struct wl_client *client,
                      uint32_t id_wl_shell,
@@ -794,13 +805,7 @@ create_shell_surface(struct wl_client *client,
 
     /* init link so its safe to always remove it in destroy_shell_surface */
     wl_list_init(&shsurf->link);
-
-    shsurf->resource = wl_resource_create(client, &wl_shell_surface_interface,
-                                          1, id_wl_shell);
-
-    wl_resource_set_implementation(shsurf->resource,
-                                   &g_surface_interface,
-                                   shsurf, remove_shell_surface);
+    set_shell_surface_implementation(client, id_wl_shell, shsurf);
 
     return shsurf;
 }
@@ -811,9 +816,18 @@ shell_get_shell_surface(struct wl_client   *client,
                         uint32_t id_wl_shell,
                         struct wl_resource *surface_resource)
 {
+    struct ivi_shell_ext *shell = get_instance();
     struct weston_surface *surface = NULL;
     struct shell_surface  *shsurf  = NULL;
+
     surface = wl_resource_get_user_data(surface_resource);
+    wl_list_for_each(shsurf, &shell->list_shell_surface, link) {
+        if (shsurf->surface == surface) {
+            set_shell_surface_implementation(client, id_wl_shell, shsurf);
+            return;
+        }
+    }
+
     shsurf = create_shell_surface(client, id_wl_shell, surface);
     if (!shsurf) {
         wl_resource_post_error(surface_resource, WL_DISPLAY_ERROR_INVALID_OBJECT,
@@ -828,7 +842,6 @@ shell_get_shell_surface(struct wl_client   *client,
 
     shsurf->pid = pid;
     shsurf->resource = resource;
-    struct ivi_shell_ext *shell = get_instance();
     wl_list_insert(&shell->list_shell_surface, &shsurf->link);
 }
 
@@ -935,7 +948,7 @@ send_to_client(struct ivi_nativesurface *p_nativesurface, uint32_t send_flag)
     }
 }
 
-uint32_t
+static uint32_t
 update_nativesurface(struct ivi_nativesurface *p_nativesurface)
 {
     if (NULL == p_nativesurface || NULL == p_nativesurface->surface) {
@@ -952,14 +965,14 @@ update_nativesurface(struct ivi_nativesurface *p_nativesurface)
     struct gbm_bo *bo = gbm_bo_import(dc->gbm, GBM_BO_IMPORT_WL_BUFFER,
                                       buf->legacy_buffer, GBM_BO_USE_SCANOUT);
     if (NULL == bo) {
-        weston_log("Texture Sharing Failed to import gbm_bo");
+        weston_log("Texture Sharing Failed to import gbm_bo\n");
         return IVI_SHARESURFACE_STABLE;
     }
 
     struct drm_gem_flink flink = {};
     flink.handle = gbm_bo_get_handle(bo).u32;
     if (0 != drmIoctl(gbm_device_get_fd(dc->gbm), DRM_IOCTL_GEM_FLINK, &flink)) {
-        weston_log("Texture Sharing gem_flink: returned non-zero failed");
+        weston_log("Texture Sharing gem_flink: returned non-zero failedi\n");
         return IVI_SHARESURFACE_STABLE;
     }
 
@@ -992,7 +1005,7 @@ update_nativesurface(struct ivi_nativesurface *p_nativesurface)
     return ret;
 }
 
-void
+static void
 add_shell_surface_in_ivi_shell_ext(struct weston_surface *surface)
 {
     struct shell_surface *s = NULL;
@@ -1053,6 +1066,7 @@ send_nativesurface_event(struct wl_listener *listener, void *data)
         {
             weston_log("Texture Sharing warning, Unnecessary nativesurface exists.");
             wl_list_remove(&p_nativesurface->link);
+            free_nativesurface(p_nativesurface);
             continue;
         }
         uint32_t send_flag = update_nativesurface(p_nativesurface);
@@ -1092,7 +1106,7 @@ static int32_t
 texture_sharing_init(struct weston_compositor *wc)
 {
     if (NULL == wc) {
-        weston_log("Can not execute texture sharing.");
+        weston_log("Can not execute texture sharing.\n");
         return -1;
     }
 
@@ -1109,7 +1123,7 @@ int32_t
 setup_texture_sharing(struct weston_compositor *wc)
 {
     if (NULL == wc) {
-        weston_log("Can not execute texture sharing.");
+        weston_log("Can not execute texture sharing.\n");
         return -1;
     }
 
@@ -1131,13 +1145,13 @@ setup_texture_sharing(struct weston_compositor *wc)
 
     surf_content = malloc(sizeof *surf_content);
     if (surf_content == NULL) {
-        weston_log("Texture Sharing can't use.");
+        weston_log("Texture Sharing can't use.\n");
         return -1;
     }
 
     weston_surf_data = malloc(sizeof *weston_surf_data);
     if (weston_surf_data == NULL) {
-        weston_log("weston_surf_data can't create.");
+        weston_log("weston_surf_data can't create.\n");
         free(surf_content);
         return -1;
     }
