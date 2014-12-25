@@ -81,6 +81,7 @@ struct ivi_layout_surface_properties
 	bool visibility;
 	int32_t transition_type;
 	uint32_t transition_duration;
+	bool is_forced_configure_event;
 };
 
 struct ivi_layout_layer_properties
@@ -628,6 +629,10 @@ int32_t
 ivi_layout_surface_set_source_rectangle(struct ivi_layout_surface *ivisurf,
 					int32_t x, int32_t y,
 					int32_t width, int32_t height);
+
+int32_t
+ivi_layout_surface_set_is_forced_configure_event(struct weston_surface *surface,
+						 bool is_force);
 
 /**
  * \brief get weston_output from ivi_layout_screen.
