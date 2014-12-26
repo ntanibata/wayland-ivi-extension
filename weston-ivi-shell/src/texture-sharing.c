@@ -605,15 +605,24 @@ share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
     struct ivi_shell_ext *shell_ext = get_instance();
     struct ivi_nativesurface_client_link *client_link = NULL;
     uint32_t caps = 0;
+    size_t title_length = 0;
+    if (title != NULL) {
+        title_length = strlen(title);
+    }
+
     wl_list_for_each(shsurf, &shell_ext->list_shell_surface, link) {
         if (pid != shsurf->pid) {
             continue;
         }
 
-        const bool equalNULL = NULL == shsurf->title && NULL == title;
-        const bool equalString = NULL != shsurf->title && NULL != title && 0 == strcmp(title, shsurf->title);
-        if (!equalNULL && !equalString) {
-            continue;
+        if (title_length > 0) {
+            if (shsurf->title == NULL) {
+                continue;
+            }
+
+            if (0 != strcmp(title, shsurf->title)) {
+                continue;
+            }
         }
 
         struct ivi_nativesurface *nativesurf = find_nativesurface(shsurf->pid, title);
