@@ -649,8 +649,70 @@ share_get_share_surface(struct wl_client *client, struct wl_resource *resource,
     }
 }
 
+static struct shell_surface *
+get_shell_surface_from_weston_surface(struct weston_surface *surface)
+{
+    struct ivi_shell_ext *shell = get_instance();
+    struct shell_surface *shsurf;
+
+    wl_list_for_each(shsurf, &shell->list_shell_surface, link) {
+        if (shsurf->surface == surface) {
+            return shsurf;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+share_get_share_surface_from_id(struct wl_client *client, struct wl_resource *resource,
+        uint32_t id, uint32_t surface_id)
+{
+    struct ivi_shell_ext *shell = get_instance();
+    struct ivi_layout_surface *layout_surface;
+    struct weston_surface *surface;
+    struct ivi_nativesurface *nativesurf;
+    struct shell_surface *shsurf;
+    struct ivi_nativesurface_client_link *client_link = NULL;
+    uint32_t caps = 0;
+
+    layout_surface = ivi_layout_get_surface_from_id(surface_id);
+    surface = ivi_layout_surface_get_weston_surface(layout_surface);
+
+    shsurf = get_shell_surface_from_weston_surface(surface);
+    if (shsurf == NULL) {
+        return;
+    }
+
+    nativesurf = find_nativesurface(shsurf->pid, shsurf->title);
+    if (nativesurf == NULL) {
+        nativesurf = alloc_nativesurface(shsurf->surface,
+                                         id,
+                                         shsurf->pid,
+                                         shsurf->title,
+                                         (int32_t)WL_SHARE_SURFACE_EXT_TYPE_GBM,
+                                         (int32_t)WL_SHARE_SURFACE_EXT_FORMAT_ARGB8888);
+
+        if (nativesurf == NULL) {
+                weston_log("Texture Sharing Insufficient memory\n");
+                wl_resource_post_error(resource, WL_DISPLAY_ERROR_INVALID_OBJECT,
+                                       "Insufficient memory");
+                return;
+        }
+
+        wl_list_insert(&shell->list_nativesurface, &nativesurf->link);
+    }
+
+    client_link = add_nativesurface_client(nativesurf, id, client);
+    caps = get_shared_client_input_caps(client_link);
+    wl_share_surface_ext_send_input_capabilities(client_link->resource, caps);
+
+    ivi_layout_surface_set_is_forced_configure_event(nativesurf->surface, true);
+}
+
 static struct wl_share_ext_interface g_share_implementation = {
-    share_get_share_surface
+    share_get_share_surface,
+    share_get_share_surface_from_id
 };
 
 static void
