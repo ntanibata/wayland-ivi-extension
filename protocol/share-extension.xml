@@ -29,6 +29,11 @@
         <arg name="pid" type="uint"/>
         <arg name="title" type="string" allow-null="true"/>
         </request>
+
+        <request name="get_share_surface_from_id">
+            <arg name="id" type="new_id" interface="wl_share_surface_ext"/>
+            <arg name="surface_id" type="uint"/>
+        </request>
     </interface>
 
     <interface name="wl_share_surface_ext" version="2">
