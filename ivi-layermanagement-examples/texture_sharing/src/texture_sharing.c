@@ -32,6 +32,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include "texture_sharing.h"
 #include "texture_sharing_test.h"
@@ -485,8 +486,14 @@ get_share_surface(struct TextureSharing *p_share)
 
     wl_list_for_each(p_info, &p_share->share_surface_list, link)
     {
-        p_info->p_share_surf = wl_share_ext_get_share_surface(
-            p_share->p_share_ext, p_info->pid, p_info->p_window_title);
+        if (p_info->sharing_type == SHARING_TYPE_PID_TITLE) {
+            p_info->p_share_surf = wl_share_ext_get_share_surface(
+                p_share->p_share_ext, p_info->pid, p_info->p_window_title);
+        }
+        else {
+            p_info->p_share_surf = wl_share_ext_get_share_surface_from_id(
+                p_share->p_share_ext, p_info->surface_id);
+        }
 
         if (1 == p_share->enable_listener)
         {
@@ -955,16 +962,49 @@ texture_sharing_main(struct TextureSharing *p_ts)
 }
 
 #ifndef USE_LTP
+static void
+usage(int error_code)
+{
+    fprintf(stdout, "Usage: texture_sharing_test pid title\n"
+                    "       texture_sharing_test -s surface_id\n");
+
+    exit(error_code);
+}
+
 int
 main(int argc, char **argv)
 {
     struct TextureSharing ts;
     struct ShareSurfaceInfo *p_info;
+    int c;
+    int i;
+    enum SharingType sharing_type = SHARING_TYPE_PID_TITLE;
+    uint32_t surface_id = 0;
+    char *error = NULL;
+    static const struct option longopts[] = {
+        {"surface", required_argument, NULL, 's'},
+        {0, 0, NULL, 0}
+    };
 
-    if (argc != 3)
+    while ((c = getopt_long(argc, argv, "s:h", longopts, &i)) != -1) {
+        switch (c) {
+        case 's':
+            sharing_type = SHARING_TYPE_SURFACE_ID;
+            surface_id = strtoul(optarg, &error, 10);
+            if (error != NULL && *error != '\0') {
+                usage(-1);
+            }
+            break;
+        case 'h':
+            usage(0);
+            break;
+        }
+    }
+
+    if (sharing_type == SHARING_TYPE_PID_TITLE && argc != 3)
     {
-        fprintf(stderr, "usage: texture_sharing_test <pid to share> <window title to share>\n");
-        return 1;
+        usage(-1);
+        return -1;
     }
 
     memset(&ts, 0x00, sizeof(ts));
@@ -978,8 +1018,15 @@ main(int argc, char **argv)
     p_info = (struct ShareSurfaceInfo*)calloc(1, sizeof(*p_info));
 
     p_info->p_share = &ts;
-    p_info->pid     = atoi(argv[1]);
-    p_info->p_window_title = strdup(argv[2]);
+    p_info->sharing_type = sharing_type;
+    if (p_info->sharing_type == SHARING_TYPE_PID_TITLE) {
+        p_info->pid     = atoi(argv[1]);
+        p_info->p_window_title = strdup(argv[2]);
+    }
+    else {
+        p_info->surface_id = surface_id;
+    }
+
     wl_list_insert(ts.share_surface_list.prev, &p_info->link);
 
     return texture_sharing_main(&ts);

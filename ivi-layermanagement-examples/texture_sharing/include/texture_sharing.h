@@ -45,8 +45,15 @@ struct SharingBuffer
     GLuint         tex_obj_id;
 };
 
+enum SharingType
+{
+    SHARING_TYPE_PID_TITLE,
+    SHARING_TYPE_SURFACE_ID
+};
+
 struct ShareSurfaceInfo
 {
+    enum SharingType             sharing_type;
     struct TextureSharing       *p_share;
     pid_t                        pid;
     char                        *p_window_title;
@@ -54,6 +61,7 @@ struct ShareSurfaceInfo
     struct SharingBuffer         sharing_buffer;
     int                          enable_touch_event_redirection;
     struct wl_list               link;
+    uint32_t                     surface_id;
 };
 
 struct TextureSharing
