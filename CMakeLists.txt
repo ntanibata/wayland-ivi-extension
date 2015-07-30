@@ -42,6 +42,7 @@ if(WITH_ILM_INPUT)
     add_subdirectory(ivi-input-controller)
 endif()
 
+add_subdirectory(wl-shell-emulator)
 
 #=============================================================================================
 # generate all documents
