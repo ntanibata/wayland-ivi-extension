@@ -126,8 +126,11 @@ OpenGLES2App::OpenGLES2App(float fps, float animationSpeed, SurfaceConfiguration
     createWLContext(config);
     createEGLContext();
 
-    ilmClient_init((t_ilm_nativedisplay)m_wlContextStruct.wlDisplay);
-    setupLayerMangement(config);
+    if (m_wlContextStruct.wlShell == NULL)
+    {
+        ilmClient_init((t_ilm_nativedisplay)m_wlContextStruct.wlDisplay);
+        setupLayerMangement(config);
+    }
 
     if (config->nosky)
     {
