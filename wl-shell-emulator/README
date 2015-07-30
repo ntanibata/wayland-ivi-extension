@@ -1,0 +1,21 @@
+This directory contains the wl-shell-emulator module.
+To use this, add it to the "ivi-module" entry in your weston.ini.
+Multiple modules may be specified in the same entry by separating
+the modules with commas.
+Additionally, the basement of surface-id is indentified by weston.ini
+at "surface-id-for-wl-shell" entry. wl-shell-emulator will increment
+surface-id per wl-shell-surface creation.
+
+- Sample of weston.ini
+[core]
+shell=ivi-shell.so
+
+[ivi-shell]
+ivi-module=ivi-controller.so,wl-shell-emulator.so
+surface-id-for-wl-shell-app=0x30000000
+
+- How to
+ivi-layermanagement-examples/layer-add-surfaces is easy
+for you to try wl-shell-emulator. When you invoke wl_shell
+application. layer-add-surfaces can add the ivi-surface to a layer
+and set visibility for it.
