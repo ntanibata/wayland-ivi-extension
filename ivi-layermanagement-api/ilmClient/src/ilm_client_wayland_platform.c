@@ -69,6 +69,46 @@ struct ilm_client_context {
     uint32_t name_controller;
 };
 
+static void roundtrip_done(void *data, struct wl_callback *callback,
+                           uint32_t serial)
+{
+    (void) serial;
+
+    *(int *)data = 1;
+
+    wl_callback_destroy(callback);
+}
+
+static struct wl_callback_listener roundtrip_listener = {roundtrip_done};
+
+int display_roundtrip_queue(struct wl_display *display,
+                            struct wl_event_queue *queue)
+{
+    int done = 0;
+    int ret = 0;
+    struct wl_callback *callback = wl_display_sync(display);
+
+    if (! callback)
+    {
+        return -1;
+    }
+
+    wl_proxy_set_queue((void *)callback, queue);
+    wl_callback_add_listener(callback, &roundtrip_listener, &done);
+
+    while (ret != -1 && !done)
+    {
+        ret = wl_display_dispatch_queue(display, queue);
+    }
+
+    if (ret == -1 && !done)
+    {
+        wl_callback_destroy(callback);
+    }
+
+    return ret;
+}
+
 static void
 wayland_client_init(struct ilm_client_context *ctx)
 {
@@ -217,7 +257,7 @@ init_client(void)
         fprintf(stderr, "Failed to add registry listener\n");
         return;
     }
-    wl_display_roundtrip_queue(ctx->display, ctx->queue);
+    display_roundtrip_queue(ctx->display, ctx->queue);
 
     if ((ctx->display == NULL) || (ctx->ivi_application == NULL)) {
         fprintf(stderr, "Failed to connect display at ilm_client\n");
@@ -239,7 +279,7 @@ get_client_instance(void)
         exit(0);
     }
 
-    wl_display_roundtrip_queue(ctx->display, ctx->queue);
+    display_roundtrip_queue(ctx->display, ctx->queue);
 
     return ctx;
 }
